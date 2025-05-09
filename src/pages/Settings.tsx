@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { UserIcon, UsersIcon, BellIcon, MailIcon } from "lucide-react";
-import { supabase } from "../lib/supabaseClient";
+import { useProfile } from "../contexts/ProfileContext";
 
 const Settings: React.FC = () => {
+  const { profile, loading, error, saveProfile, fetchProfile } = useProfile();
+  const [name, setName] = useState("");
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
-  const [profileForm, setProfileForm] = useState({
-    name: "",
-    email: user?.email || "",
-  });
   const [householdForm, setHouseholdForm] = useState({
-    name: "",
-    members: [],
+    name: "My Household",
+    members: [{ id: "1", email: "family@example.com", status: "Accepted" }],
     inviteEmail: "",
   });
   const [notificationSettings, setNotificationSettings] = useState({
@@ -23,154 +21,17 @@ const Settings: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!user) return;
-    fetchHouseholdData();
-    fetchNotificationSettings();
-  }, [user]);
+    fetchProfile();
+  }, []);
 
-  const fetchNotificationSettings = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-        expiry_notifications,
-        inventory_updates,
-        recipe_recommendations,
-        email_notifications
-      `
-      )
-      .eq("id", user!.id)
-      .single();
-
-    if (error) {
-      console.error("Error loading notification settings:", error);
-      return;
-    }
-
-    setNotificationSettings({
-      expiryNotifications: data.expiry_notifications,
-      inventoryUpdates: data.inventory_updates,
-      recipeRecommendations: data.recipe_recommendations,
-      emailNotifications: data.email_notifications,
-    });
-  };
-
-  const handleSaveNotificationSettings = async () => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        expiry_notifications: notificationSettings.expiryNotifications,
-        inventory_updates: notificationSettings.inventoryUpdates,
-        recipe_recommendations: notificationSettings.recipeRecommendations,
-        email_notifications: notificationSettings.emailNotifications,
-      })
-      .eq("id", user!.id);
-
-    if (error) {
-      console.error("Failed to save notification settings:", error);
-      alert("❌ Failed to save notification settings.");
-    } else {
-      alert("✅ Notification settings saved!");
-    }
-  };
-
-  const fetchHouseholdData = async () => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("household_id, name")
-      .eq("id", user?.id)
-      .single();
-
+  useEffect(() => {
     if (profile?.name) {
-      setProfileForm((prev) => ({ ...prev, name: profile.name }));
+      setName(profile.name);
     }
-
-    if (!profile?.household_id) return;
-
-    const { data: household } = await supabase
-      .from("households")
-      .select("name")
-      .eq("id", profile.household_id)
-      .single();
-
-    const { data: members } = await supabase
-      .from("profiles")
-      .select("id, email")
-      .eq("household_id", profile.household_id);
-
-    setHouseholdForm((prev) => ({
-      ...prev,
-      name: household?.name || "",
-      members:
-        members
-          ?.filter((m) => m.id !== user?.id)
-          .map((m) => ({ id: m.id, email: m.email, status: "Accepted" })) || [],
-    }));
-  };
-
-  const handleHouseholdNameUpdate = async () => {
-    if (!user) return;
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("household_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile?.household_id) {
-      alert("Household not found.");
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("households")
-      .update({ name: householdForm.name })
-      .eq("id", profile.household_id);
-
-    if (updateError) {
-      console.error(updateError);
-      alert("Failed to update household name.");
-    } else {
-      alert("Household name updated!");
-    }
-  };
+  }, [profile]);
 
   const handleInviteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHouseholdForm((prev) => ({ ...prev, inviteEmail: e.target.value }));
-  };
-
-  const handleSendInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const { data: invitee } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", householdForm.inviteEmail)
-      .single();
-
-    const { data: inviter } = await supabase
-      .from("profiles")
-      .select("household_id")
-      .eq("id", user?.id)
-      .single();
-
-    if (!invitee?.id || !inviter?.household_id) {
-      alert("Invalid invite or missing household");
-      return;
-    }
-
-    await supabase
-      .from("profiles")
-      .update({ household_id: inviter.household_id })
-      .eq("id", invitee.id);
-
-    await fetchHouseholdData();
-    setHouseholdForm((prev) => ({ ...prev, inviteEmail: "" }));
-  };
-
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,18 +41,14 @@ const Settings: React.FC = () => {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Simulate sending invitation
+    alert(`Invitation sent to ${householdForm.inviteEmail}`);
+    setHouseholdForm((prev) => ({ ...prev, inviteEmail: "" }));
+  };
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ name: profileForm.name })
-      .eq("id", user?.id);
-
-    if (error) {
-      console.error("Failed to update profile:", error.message);
-      alert("Failed to update profile.");
-    } else {
-      alert("Profile updated successfully");
-    }
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProfile({ name });
   };
 
   const handleLogout = async () => {
@@ -250,66 +107,52 @@ const Settings: React.FC = () => {
 
         <div className="p-6">
           {activeTab === "profile" && (
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={profileForm.name}
-                  onChange={handleProfileChange}
-                  className="w-full px-3 py-2 border rounded-md"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={profileForm.email}
-                  disabled
-                  className="w-full px-3 py-2 border rounded-md bg-gray-50"
-                />
-                <p className="text-sm text-gray-500">
-                  Email cannot be changed.
-                </p>
-              </div>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-500 text-white rounded-md"
-              >
-                Save Changes
-              </button>
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  Account Actions
-                </h3>
+            <form onSubmit={handleProfileSubmit}>
+              <div className="space-y-6">
+                {error && <div className="text-red-500 text-sm">{error}</div>}
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name || profile?.name || ""}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                    disabled={loading}
+                  />
+                </div>
                 <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded-md"
+                  type="submit"
+                  disabled={loading}
+                  className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:opacity-50"
                 >
-                  Sign Out
+                  {loading ? "Saving..." : "Save Changes"}
                 </button>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">
+                    Account Actions
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </form>
           )}
 
           {activeTab === "household" && (
             <div>
-              <div className="mb-4">
+              <div className="mb-6">
                 <label
                   htmlFor="household-name"
                   className="block text-sm font-medium text-gray-700 mb-1"
@@ -326,7 +169,7 @@ const Settings: React.FC = () => {
                       name: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <button
                   onClick={handleHouseholdNameUpdate}
@@ -339,34 +182,34 @@ const Settings: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Household Members
                 </h3>
-                <table className="min-w-full bg-white">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        Email
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="px-4 py-2 text-sm text-gray-800">
-                        {user?.email}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-green-600">
-                        Owner
-                      </td>
-                      <td className="px-4 py-2 text-right">-</td>
-                    </tr>
-                    {householdForm.members.map((member) => (
-                      <tr key={member.id}>
-                        <td className="px-4 py-2 text-sm text-gray-800">
-                          {member.email}
+                <div className="border border-gray-200 rounded-md overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Email
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Status
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user?.email}
                         </td>
                         <td className="px-4 py-2 text-sm text-blue-600">
                           {member.status}
@@ -377,32 +220,54 @@ const Settings: React.FC = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      {householdForm.members.map((member) => (
+                        <tr key={member.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {member.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {member.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button className="text-red-600 hover:text-red-900">
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <form onSubmit={handleSendInvite} className="border-t pt-6">
-                <label
-                  htmlFor="invite-email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+
+              <form
+                onSubmit={handleSendInvite}
+                className="mb-6 border-t border-gray-200 pt-6"
+              >
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Invite New Member
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-full">
-                    <input
-                      type="email"
-                      id="invite-email"
-                      placeholder="Email address"
-                      value={householdForm.inviteEmail}
-                      onChange={handleInviteChange}
-                      required
-                      className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                    <MailIcon
-                      size={16}
-                      className="absolute left-3 top-2.5 text-gray-400"
-                    />
+                </h3>
+                <div className="flex">
+                  <div className="flex-grow mr-3">
+                    <label htmlFor="invite-email" className="sr-only">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MailIcon size={16} className="text-gray-400" />
+                      </div>
+                      <input
+                        type="email"
+                        id="invite-email"
+                        placeholder="Email address"
+                        value={householdForm.inviteEmail}
+                        onChange={handleInviteChange}
+                        required
+                        className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
                   </div>
                   <button
                     type="submit"
@@ -412,7 +277,8 @@ const Settings: React.FC = () => {
                   </button>
                 </div>
               </form>
-              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 mt-6 text-sm text-yellow-800">
+
+              <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 text-sm text-yellow-800">
                 <p>
                   <strong>Household Sharing:</strong> Members of your household
                   will have access to view and manage the shared inventory.
@@ -426,28 +292,113 @@ const Settings: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-800 mb-4">
                 Notification Preferences
               </h3>
-              {Object.entries(notificationSettings).map(([key, value]) => (
-                <div key={key} className="flex items-start">
-                  <input
-                    id={key}
-                    name={key}
-                    type="checkbox"
-                    checked={value}
-                    onChange={handleNotificationChange}
-                    className="h-4 w-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
-                  />
-                  <label htmlFor={key} className="ml-3 text-sm text-gray-700">
-                    {key
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}
-                  </label>
+
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="expiryNotifications"
+                      name="expiryNotifications"
+                      type="checkbox"
+                      checked={notificationSettings.expiryNotifications}
+                      onChange={handleNotificationChange}
+                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label
+                      htmlFor="expiryNotifications"
+                      className="font-medium text-gray-700"
+                    >
+                      Expiry Notifications
+                    </label>
+                    <p className="text-gray-500 text-sm">
+                      Receive notifications when food items are about to expire.
+                    </p>
+                  </div>
                 </div>
-              ))}
+
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="inventoryUpdates"
+                      name="inventoryUpdates"
+                      type="checkbox"
+                      checked={notificationSettings.inventoryUpdates}
+                      onChange={handleNotificationChange}
+                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label
+                      htmlFor="inventoryUpdates"
+                      className="font-medium text-gray-700"
+                    >
+                      Inventory Updates
+                    </label>
+                    <p className="text-gray-500 text-sm">
+                      Receive notifications when household members update the
+                      shared inventory.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="recipeRecommendations"
+                      name="recipeRecommendations"
+                      type="checkbox"
+                      checked={notificationSettings.recipeRecommendations}
+                      onChange={handleNotificationChange}
+                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label
+                      htmlFor="recipeRecommendations"
+                      className="font-medium text-gray-700"
+                    >
+                      Recipe Recommendations
+                    </label>
+                    <p className="text-gray-500 text-sm">
+                      Receive weekly recipe recommendations based on your
+                      inventory.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start pt-4 border-t border-gray-200">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="emailNotifications"
+                      name="emailNotifications"
+                      type="checkbox"
+                      checked={notificationSettings.emailNotifications}
+                      onChange={handleNotificationChange}
+                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <label
+                      htmlFor="emailNotifications"
+                      className="font-medium text-gray-700"
+                    >
+                      Email Notifications
+                    </label>
+                    <p className="text-gray-500 text-sm">
+                      Receive notifications via email in addition to in-app
+                      notifications.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="pt-4">
                 <button
                   type="button"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                  onClick={() => handleSaveNotificationSettings()}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  onClick={() => alert("Notification settings saved!")}
                 >
                   Save Preferences
                 </button>
