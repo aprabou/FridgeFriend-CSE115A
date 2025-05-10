@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useInventory } from './InventoryContext';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useInventory } from "./InventoryContext";
+import { useAuth } from "./AuthContext";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'error' | 'success';
+  type: "info" | "warning" | "error" | "success";
   read: boolean;
   createdAt: Date;
 }
@@ -14,7 +14,9 @@ interface Notification {
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => void;
+  addNotification: (
+    notification: Omit<Notification, "id" | "read" | "createdAt">
+  ) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearNotifications: () => void;
@@ -31,64 +33,78 @@ const NotificationContext = createContext<NotificationContextType>({
 
 export const useNotifications = () => useContext(NotificationContext);
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { items } = useInventory();
   const { user } = useAuth();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Calculate unread notifications count
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     if (!user || items.length === 0) return;
 
     const today = new Date();
-    const targetDays = [3, 5];
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(today.getDate() + 3);
 
-    items.forEach(item => {
-      const expDate = new Date(item.expiration);
+    // Find items expiring in the next 3 days
+    const expiringItems = items.filter((item) => {
+      const expDate = new Date(item.expirationDate);
+      return expDate >= today && expDate <= threeDaysFromNow;
+    });
+
+    // Generate notifications for expiring items
+    expiringItems.forEach((item) => {
+      const expDate = new Date(item.expirationDate);
       const daysUntilExpiration = Math.ceil(
         (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      if (targetDays.includes(daysUntilExpiration)) {
-        const alreadyNotified = notifications.find(
-          n =>
-            n.title.includes(item.name) &&
-            n.message.includes(`${daysUntilExpiration} day`)
-        );
+      const existingNotification = notifications.find(
+        (n) =>
+          n.title.includes(item.name) &&
+          n.message.includes(`${daysUntilExpiration} day`)
+      );
 
-        if (!alreadyNotified) {
-          addNotification({
-            title: `${item.name} expiring soon!`,
-            message: `${item.name} will expire in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? 's' : ''}.`,
-            type: daysUntilExpiration <= 3 ? 'warning' : 'info',
-          });
-        }
+      if (!existingNotification) {
+        addNotification({
+          title: `${item.name} expiring soon!`,
+          message: `${item.name} will expire in ${daysUntilExpiration} day${
+            daysUntilExpiration > 1 ? "s" : ""
+          }.`,
+          type: daysUntilExpiration <= 1 ? "warning" : "info",
+        });
       }
     });
   }, [items, user]);
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => {
+  const addNotification = (
+    notification: Omit<Notification, "id" | "read" | "createdAt">
+  ) => {
     const newNotification: Notification = {
       ...notification,
       id: Date.now().toString(),
       read: false,
       createdAt: new Date(),
     };
-    setNotifications(prev => [newNotification, ...prev]);
+
+    setNotifications((prev) => [newNotification, ...prev]);
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
+    setNotifications((prev) =>
+      prev.map((notification) =>
         notification.id === id ? { ...notification, read: true } : notification
       )
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
+    setNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, read: true }))
     );
   };
 
@@ -105,5 +121,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     clearNotifications,
   };
 
-  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  );
 };
