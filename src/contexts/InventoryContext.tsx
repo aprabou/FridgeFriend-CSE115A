@@ -8,12 +8,11 @@ export interface FoodItem {
   quantity: number;
   unit: string;
   category: string;
-  purchaseDate: string;
-  expirationDate: string;
-  storageLocation: string;
+  purchased: string;     // ✅ matches DB column
+  expiration: string;        // ✅ matches DB column
+  location: string;          // ✅ matches DB column
   notes?: string;
   user_id: string;
-  household_id?: string;
   created_at: string;
 }
 
@@ -60,16 +59,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       setLoading(true);
       setError(null);
-      
+
       const { data, error } = await supabase
-        .from('food_items')
+        .from('fridge_items')
         .select('*')
-        .or(`user_id.eq.${user?.id},household_id.in.(select id from households where members.contains.${user?.id})`)
-        .order('expirationDate', { ascending: true });
-      
+        .eq('user_id', user?.id)
+        .order('expiration', { ascending: true });
+
       if (error) throw error;
-      
-      setItems(data || []);
+      setItems(data ?? []);
     } catch (error: any) {
       console.error('Error fetching inventory:', error);
       setError(error.message);
@@ -81,15 +79,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addItem = async (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => {
     try {
       const { data, error } = await supabase
-        .from('food_items')
-        .insert({
-          ...item,
-          user_id: user?.id,
-        })
+        .from('fridge_items')
+        .insert({ ...item, user_id: user?.id })
         .select();
-      
+
       if (error) throw error;
-      
       if (data) {
         setItems((prev) => [...prev, data[0]]);
       }
@@ -102,13 +96,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const updateItem = async (id: string, updates: Partial<FoodItem>) => {
     try {
       const { error } = await supabase
-        .from('food_items')
+        .from('fridge_items')
         .update(updates)
         .eq('id', id);
-      
+
       if (error) throw error;
-      
-      setItems((prev) => 
+      setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
       );
     } catch (error: any) {
@@ -120,12 +113,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteItem = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('food_items')
+        .from('fridge_items')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
-      
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch (error: any) {
       console.error('Error deleting item:', error);
@@ -137,17 +129,16 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const today = new Date();
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(today.getDate() + 7);
-    
+
     return items.filter((item) => {
-      const expDate = new Date(item.expirationDate);
+      const expDate = new Date(item.expiration);
       return expDate >= today && expDate <= sevenDaysFromNow;
     });
   };
 
   const getStorageLocationCounts = () => {
     return items.reduce((acc, item) => {
-      const location = item.storageLocation;
-      acc[location] = (acc[location] || 0) + 1;
+      acc[item.location] = (acc[item.location] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
   };
