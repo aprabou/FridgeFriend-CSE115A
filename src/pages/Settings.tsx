@@ -112,17 +112,18 @@ const Settings: React.FC = () => {
                 {error && <div className="text-red-500 text-sm">{error}</div>}
                 <div>
                   <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
                   >
-                    Name
+                  Name
                   </label>
                   <input
-                    type="text"
-                    value={name || profile?.name || ""}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                    disabled={loading}
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                  disabled={loading}
                   />
                 </div>
                 <button

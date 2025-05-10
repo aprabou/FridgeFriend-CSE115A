@@ -13,13 +13,14 @@ interface ProfileContextType {
   error: string | null;
   fetchProfile: () => Promise<void>;
   saveProfile: (fields: { name: string | null }) => Promise<void>;
+  setProfile: (profile: Profile | null) => void; // New function
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfileState] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +37,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle(); // won’t throw on 0 rows
 
       if (error) throw error;
+      setProfileState(data); // Update profile state
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -68,9 +70,14 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  /* ---------- 5. Set profile directly ---------- */
+  const setProfile = (profile: Profile | null) => {
+    setProfileState(profile);
+  };
+
   return (
     <ProfileContext.Provider
-      value={{ profile, loading, error, fetchProfile, saveProfile }}
+      value={{ profile, loading, error, fetchProfile, saveProfile, setProfile }}
     >
       {children}
     </ProfileContext.Provider>

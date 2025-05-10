@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellIcon, UserCircleIcon, MenuIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useProfile } from "../../contexts/ProfileContext";
 
 interface NavbarProps {
   unreadCount: number;
@@ -10,6 +11,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => {
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
@@ -55,7 +57,7 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => 
             >
               <UserCircleIcon size={28} className="text-gray-500 hover:text-gray-700" />
               <span className="hidden md:block ml-2 text-sm text-gray-700">
-                {user?.email?.split('@')[0]}
+                {profile?.name}
               </span>
             </button>
             
