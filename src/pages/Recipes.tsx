@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '../contexts/InventoryContext';
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';
 import { SearchIcon, RefreshCwIcon } from 'lucide-react';
+import RecipeList from '../components/Recipes/RecipeList'; 
 
 const mockRecipes: Recipe[] = [
   {
@@ -263,6 +264,10 @@ const Recipes: React.FC = () => {
           </div>
         </>
       )}
+
+      <div>
+        <RecipeList />
+      </div>
     </div>
   );
 };
