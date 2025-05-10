@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { XIcon, CameraIcon, MessageSquareTextIcon } from 'lucide-react';
 import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext'; // ✅ if not already
-
-const { user } = useAuth(); // ✅ get current Supabase user
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AddItemFormProps {
   onClose: () => void;
@@ -11,6 +9,8 @@ interface AddItemFormProps {
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
   const { addItem } = useInventory();
+  const { user } = useAuth();
+
   const [showNotes, setShowNotes] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
@@ -25,45 +25,43 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
     notes: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const payload = {
-    name: formData.name,
-    expiration: formData.expirationDate,
-    category: formData.category,
-    unit: formData.unit,
-    purchased: formData.purchaseDate,
-    location: formData.storageLocation,
-    quantity: formData.quantity, // ✅ your table expects this
-    notes: formData.notes,   
-    user_id: user?.id   // ✅ optional
+    const payload = {
+      name: formData.name,
+      expiration: formData.expirationDate,
+      category: formData.category,
+      unit: formData.unit,
+      purchased: formData.purchaseDate,
+      location: formData.storageLocation,
+      quantity: formData.quantity,
+      notes: formData.notes,
+      user_id: user?.id,
+    };
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/add-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to add item to backend');
+      await addItem(payload);
+      onClose();
+    } catch (err) {
+      console.error('❌ Error adding item:', err);
+      alert('Failed to add item. Please check the backend.');
+    }
   };
-
-  try {
-    const response = await fetch('http://127.0.0.1:8000/add-item', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) throw new Error('Failed to add item to backend');
-
-    console.log('✅ Item added to backend!');
-    await addItem(payload); // ✅ send the backend-safe format to context too
-    onClose();
-  } catch (err) {
-    console.error('❌ Error adding item:', err);
-    alert('Failed to add item. Please check the backend.');
-  }
-};
-
-  
 
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
@@ -95,7 +93,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                   quantity: 1,
                   unit: 'gallon',
                   category: 'dairy',
-                  expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                  expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    .toISOString()
+                    .split('T')[0],
                 });
                 setShowScanner(false);
               }}
@@ -107,154 +107,120 @@ const handleSubmit = async (e: React.FormEvent) => {
       ) : (
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm text-gray-700 mb-1" htmlFor="name">
               Item Name*
             </label>
             <input
               type="text"
               id="name"
               name="name"
+              placeholder="e.g., Milk"
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity*
-              </label>
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">Quantity & Unit*</label>
+            <div className="flex space-x-2">
               <input
                 type="number"
-                id="quantity"
                 name="quantity"
                 min="0.1"
                 step="0.1"
                 value={formData.quantity}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-1/2 px-3 py-2 border rounded"
+                placeholder="1"
               />
-            </div>
-
-            <div>
-              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-                Unit*
-              </label>
               <select
-                id="unit"
                 name="unit"
                 value={formData.unit}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-1/2 px-3 py-2 border rounded"
               >
                 <option value="piece">Piece</option>
-                <option value="lb">Pound (lb)</option>
-                <option value="oz">Ounce (oz)</option>
-                <option value="kg">Kilogram (kg)</option>
-                <option value="g">Gram (g)</option>
                 <option value="gallon">Gallon</option>
-                <option value="quart">Quart</option>
-                <option value="pint">Pint</option>
-                <option value="cup">Cup</option>
-                <option value="ml">Milliliter (ml)</option>
-                <option value="l">Liter (l)</option>
-                <option value="bunch">Bunch</option>
-                <option value="package">Package</option>
+                <option value="oz">Ounce</option>
+                <option value="lb">Pound</option>
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Category*
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="fruits">Fruits</option>
-                <option value="vegetables">Vegetables</option>
-                <option value="dairy">Dairy</option>
-                <option value="meat">Meat</option>
-                <option value="poultry">Poultry</option>
-                <option value="seafood">Seafood</option>
-                <option value="grains">Grains</option>
-                <option value="bakery">Bakery</option>
-                <option value="canned">Canned Goods</option>
-                <option value="frozen">Frozen Foods</option>
-                <option value="snacks">Snacks</option>
-                <option value="beverages">Beverages</option>
-                <option value="condiments">Condiments</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="storageLocation" className="block text-sm font-medium text-gray-700 mb-1">
-                Storage Location*
-              </label>
-              <select
-                id="storageLocation"
-                name="storageLocation"
-                value={formData.storageLocation}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="refrigerator">Refrigerator</option>
-                <option value="freezer">Freezer</option>
-                <option value="pantry">Pantry</option>
-                <option value="counter">Counter</option>
-                <option value="cabinet">Cabinet</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+          <div>
+            <label htmlFor="purchaseDate" className="block text-sm text-gray-700 mb-1">
+              Purchase Date*
+            </label>
+            <input
+              type="date"
+              id="purchaseDate"
+              name="purchaseDate"
+              value={formData.purchaseDate}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Purchase Date*
-              </label>
-              <input
-                type="date"
-                id="purchaseDate"
-                name="purchaseDate"
-                value={formData.purchaseDate}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+          <div>
+            <label htmlFor="expirationDate" className="block text-sm text-gray-700 mb-1">
+              Expiration Date*
+            </label>
+            <input
+              type="date"
+              id="expirationDate"
+              name="expirationDate"
+              value={formData.expirationDate}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            />
+          </div>
 
-            <div>
-              <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Expiration Date*
-              </label>
-              <input
-                type="date"
-                id="expirationDate"
-                name="expirationDate"
-                value={formData.expirationDate}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+          <div>
+            <label htmlFor="category" className="block text-sm text-gray-700 mb-1">
+              Category*
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            >
+              <option value="fruits">Fruits</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="dairy">Dairy</option>
+              <option value="meat">Meat</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="storageLocation" className="block text-sm text-gray-700 mb-1">
+              Storage Location*
+            </label>
+            <select
+              id="storageLocation"
+              name="storageLocation"
+              value={formData.storageLocation}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border rounded"
+            >
+              <option value="refrigerator">Refrigerator</option>
+              <option value="freezer">Freezer</option>
+              <option value="pantry">Pantry</option>
+            </select>
           </div>
 
           {showNotes && (
             <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="notes" className="block text-sm text-gray-700 mb-1">
                 Notes
               </label>
               <textarea
@@ -263,43 +229,32 @@ const handleSubmit = async (e: React.FormEvent) => {
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border rounded"
                 placeholder="Add any additional details..."
-              ></textarea>
+              />
             </div>
           )}
 
-          <div className="flex items-center space-x-4">
-            <button
-              type="button"
-              onClick={() => setShowNotes(!showNotes)}
-              className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-            >
-              <MessageSquareTextIcon size={16} className="mr-1" />
+          <div className="flex justify-between text-sm">
+            <button type="button" onClick={() => setShowNotes(!showNotes)} className="text-blue-600">
               {showNotes ? 'Hide Notes' : 'Add Notes'}
             </button>
-
-            <button
-              type="button"
-              onClick={() => setShowScanner(true)}
-              className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-            >
-              <CameraIcon size={16} className="mr-1" />
+            <button type="button" onClick={() => setShowScanner(true)} className="text-blue-600">
               Scan Receipt
             </button>
           </div>
 
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="px-4 py-2 bg-green-500 text-white rounded"
             >
               Add Item
             </button>
