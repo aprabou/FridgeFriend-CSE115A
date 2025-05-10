@@ -7,7 +7,7 @@ import { PlusIcon, CookingPotIcon } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { items, loading } = useInventory();
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -15,14 +15,14 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-6xl mx-auto">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
         <p className="text-gray-600">Track your food inventory and reduce waste.</p>
       </header>
-      
+
       {items.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <div className="mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
             <ExpirationSummary />
             <StorageDistribution />
           </div>
-          
+
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-6 py-4 bg-orange-500 text-white flex items-center justify-between">
               <div className="flex items-center">
@@ -58,14 +58,13 @@ const Dashboard: React.FC = () => {
                 View All
               </Link>
             </div>
-            
             <div className="p-4">
               <p className="text-gray-600 text-center py-8">
                 Check out recipe suggestions based on your inventory on the Recipes page!
               </p>
             </div>
           </div>
-          
+
           <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
             <h3 className="font-medium text-blue-800 mb-1">Storage Tip</h3>
             <p className="text-blue-700 text-sm">
