@@ -8,9 +8,9 @@ export interface FoodItem {
   quantity: number;
   unit: string;
   category: string;
-  purchased: string;     // ✅ matches DB column
-  expiration: string;        // ✅ matches DB column
-  location: string;          // ✅ matches DB column
+  purchased: string;
+  expiration: string;
+  location: string;
   notes?: string;
   user_id: string;
   created_at: string;
@@ -25,6 +25,7 @@ interface InventoryContextType {
   deleteItem: (id: string) => Promise<void>;
   getSoonToExpire: () => FoodItem[];
   getStorageLocationCounts: () => Record<string, number>;
+  refetchItems: () => Promise<void>;
 }
 
 const InventoryContext = createContext<InventoryContextType>({
@@ -36,6 +37,7 @@ const InventoryContext = createContext<InventoryContextType>({
   deleteItem: async () => {},
   getSoonToExpire: () => [],
   getStorageLocationCounts: () => ({}),
+  refetchItems: async () => {},
 });
 
 export const useInventory = () => useContext(InventoryContext);
@@ -77,21 +79,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const addItem = async (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('fridge_items')
-        .insert({ ...item, user_id: user?.id })
-        .select();
+  try {
+    await fetchItems(); // ✅ just re-fetch items from Supabase
+  } catch (error: any) {
+    console.error('Error refreshing items after add:', error);
+    setError(error.message);
+  }
+};
 
-      if (error) throw error;
-      if (data) {
-        setItems((prev) => [...prev, data[0]]);
-      }
-    } catch (error: any) {
-      console.error('Error adding item:', error);
-      setError(error.message);
-    }
-  };
 
   const updateItem = async (id: string, updates: Partial<FoodItem>) => {
     try {
@@ -101,9 +96,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .eq('id', id);
 
       if (error) throw error;
-      setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
-      );
+      await fetchItems();
     } catch (error: any) {
       console.error('Error updating item:', error);
       setError(error.message);
@@ -152,6 +145,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     deleteItem,
     getSoonToExpire,
     getStorageLocationCounts,
+    refetchItems: fetchItems,
   };
 
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;

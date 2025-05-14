@@ -36,38 +36,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { items } = useInventory();
   const { user } = useAuth();
 
-  // Calculate unread notifications count
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Check for soon-to-expire items and generate notifications
   useEffect(() => {
     if (!user || items.length === 0) return;
 
     const today = new Date();
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(today.getDate() + 3);
-    
-    // Find items expiring in the next 3 days
-    const expiringItems = items.filter(item => {
-      const expDate = new Date(item.expirationDate);
-      return expDate >= today && expDate <= threeDaysFromNow;
-    });
-    
-    // Generate notifications for expiring items
-    expiringItems.forEach(item => {
-      const expDate = new Date(item.expirationDate);
-      const daysUntilExpiration = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
-      const existingNotification = notifications.find(
-        n => n.title.includes(item.name) && n.message.includes(`${daysUntilExpiration} day`)
+    const targetDays = [3, 5];
+
+    items.forEach(item => {
+      const expDate = new Date(item.expiration);
+      const daysUntilExpiration = Math.ceil(
+        (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       );
-      
-      if (!existingNotification) {
-        addNotification({
-          title: `${item.name} expiring soon!`,
-          message: `${item.name} will expire in ${daysUntilExpiration} day${daysUntilExpiration > 1 ? 's' : ''}.`,
-          type: daysUntilExpiration <= 1 ? 'warning' : 'info',
-        });
+
+      if (targetDays.includes(daysUntilExpiration)) {
+        const alreadyNotified = notifications.find(
+          n =>
+            n.title.includes(item.name) &&
+            n.message.includes(`${daysUntilExpiration} day`)
+        );
+
+        if (!alreadyNotified) {
+          addNotification({
+            title: `${item.name} expiring soon!`,
+            message: `${item.name} will expire in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? 's' : ''}.`,
+            type: daysUntilExpiration <= 3 ? 'warning' : 'info',
+          });
+        }
       }
     });
   }, [items, user]);
@@ -79,7 +75,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       read: false,
       createdAt: new Date(),
     };
-    
     setNotifications(prev => [newNotification, ...prev]);
   };
 

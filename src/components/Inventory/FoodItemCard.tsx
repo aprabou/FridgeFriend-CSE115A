@@ -9,17 +9,26 @@ interface FoodItemCardProps {
 }
 
 const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) => {
-  const expirationDate = new Date(item.expirationDate);
-  const today = new Date();
-  
-  // Calculate days until expiration
-  const daysUntilExpiration = Math.ceil(
-    (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  
-  // Determine expiration status and styling
+  const expirationDate = item.expiration ? new Date(item.expiration) : null;
+  const purchasedDate = item.purchased ? new Date(item.purchased) : null;
+
+  let daysUntilExpiration: number | null = null;
+  if (expirationDate && !isNaN(expirationDate.getTime())) {
+    const today = new Date();
+    daysUntilExpiration = Math.ceil(
+      (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+
   const getExpirationStatus = () => {
-    if (daysUntilExpiration < 0) {
+    if (daysUntilExpiration === null) {
+      return {
+        label: 'Unknown expiration',
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-700',
+        borderColor: 'border-gray-200',
+      };
+    } else if (daysUntilExpiration < 0) {
       return {
         label: 'Expired',
         bgColor: 'bg-red-100',
@@ -49,9 +58,9 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
       };
     }
   };
-  
+
   const status = getExpirationStatus();
-  
+
   return (
     <div className={`rounded-lg border ${status.borderColor} overflow-hidden transition-all duration-200 hover:shadow-md`}>
       <div className={`${status.bgColor} px-4 py-2 flex justify-between items-center`}>
@@ -73,7 +82,7 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
           </button>
         </div>
       </div>
-      
+
       <div className="p-4 bg-white">
         <h3 className="font-medium text-lg text-gray-800">{item.name}</h3>
         <div className="mt-2 space-y-1">
@@ -83,16 +92,18 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Location:</span>
-            <span className="text-gray-800 font-medium">{item.storageLocation}</span>
+            <span className="text-gray-800 font-medium">{item.location}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Purchased:</span>
             <span className="text-gray-800 font-medium">
-              {new Date(item.purchaseDate).toLocaleDateString()}
+              {purchasedDate && !isNaN(purchasedDate.getTime())
+                ? purchasedDate.toLocaleDateString()
+                : 'Unknown'}
             </span>
           </div>
         </div>
-        
+
         {item.notes && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <p className="text-sm text-gray-600 italic">{item.notes}</p>

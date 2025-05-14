@@ -50,26 +50,27 @@ const Inventory: React.FC = () => {
 
   // Apply filters
   const filteredItems = items.filter(item => {
-    const matchesLocation = !filters.location || item.storageLocation === filters.location;
-    const matchesCategory = !filters.category || item.category === filters.category;
-    
-    const matchesExpiringSoon = !filters.expiringSoon || (() => {
-      const today = new Date();
-      const expDate = new Date(item.expirationDate);
-      const daysUntilExpiration = Math.ceil(
-        (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      return daysUntilExpiration >= 0 && daysUntilExpiration <= 7;
-    })();
-    
-    const matchesSearch = !filters.search || 
-      item.name.toLowerCase().includes(filters.search.toLowerCase());
-    
-    return matchesLocation && matchesCategory && matchesExpiringSoon && matchesSearch;
-  });
+  const matchesLocation = !filters.location || item.location === filters.location;
+  const matchesCategory = !filters.category || item.category === filters.category;
+
+  const matchesExpiringSoon = !filters.expiringSoon || (() => {
+    const today = new Date();
+    const expDate = new Date(item.expiration); // ✅ was item.expirationDate
+    const daysUntilExpiration = Math.ceil(
+      (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return daysUntilExpiration >= 0 && daysUntilExpiration <= 7;
+  })();
+
+  const matchesSearch = !filters.search || 
+    item.name.toLowerCase().includes(filters.search.toLowerCase());
+
+  return matchesLocation && matchesCategory && matchesExpiringSoon && matchesSearch;
+});
+
 
   // Get unique values for dropdowns
-  const locations = [...new Set(items.map(item => item.storageLocation))];
+  const locations = [...new Set(items.map(item => item.location))];
   const categories = [...new Set(items.map(item => item.category))];
 
   if (loading) {
