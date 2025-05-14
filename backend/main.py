@@ -4,12 +4,13 @@ from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
 import requests
+from datetime import datetime
 
 load_dotenv()
 
 app = FastAPI()
 
-# ✅ CORS configuration for frontend
+# ✅ CORS config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -18,26 +19,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Supabase config
+# ✅ Supabase credentials
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_SERVICE_KEY")
 
 print(f"Supabase URL: {url}")
 print(f"Supabase KEY: {key[:10]}...")
 
-# ✅ Pydantic model includes user_id
+# ✅ Pydantic model (no notes)
 class Item(BaseModel):
     name: str
-    expiration: str
+    expiration: str  # format: YYYY-MM-DD
     category: str
     unit: str
-    purchased: str
+    purchased: str   # format: YYYY-MM-DD
     location: str
     quantity: int
     user_id: str
 
 @app.post("/add-item")
 async def add_item(item: Item):
+    try:
+        expiration_date = datetime.strptime(item.expiration, "%Y-%m-%d").date().isoformat()
+        purchase_date = datetime.strptime(item.purchased, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
     headers = {
         "apikey": key,
         "Authorization": f"Bearer {key}",
@@ -46,13 +53,13 @@ async def add_item(item: Item):
 
     payload = {
         "name": item.name,
-        "expiration": item.expiration,
+        "expiration": expiration_date,
         "category": item.category,
         "unit": item.unit,
-        "purchased": item.purchased,
+        "purchased": purchase_date,
         "location": item.location,
         "quantity": item.quantity,
-        "user_id": item.user_id  # ✅ now dynamic!
+        "user_id": item.user_id
     }
 
     response = requests.post(

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XIcon, CameraIcon, MessageSquareTextIcon } from 'lucide-react';
+import { XIcon, CameraIcon } from 'lucide-react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -11,7 +11,6 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
   const { addItem } = useInventory();
   const { user } = useAuth();
 
-  const [showNotes, setShowNotes] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -22,11 +21,10 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
     purchaseDate: new Date().toISOString().split('T')[0],
     expirationDate: '',
     storageLocation: 'refrigerator',
-    notes: '',
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -43,7 +41,6 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
       purchased: formData.purchaseDate,
       location: formData.storageLocation,
       quantity: formData.quantity,
-      notes: formData.notes,
       user_id: user?.id,
     };
 
@@ -55,7 +52,8 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
       });
 
       if (!response.ok) throw new Error('Failed to add item to backend');
-      await addItem(payload);
+
+      await addItem(payload); // ✅ add it to Supabase via context
       onClose();
     } catch (err) {
       console.error('❌ Error adding item:', err);
@@ -93,7 +91,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
                   quantity: 1,
                   unit: 'gallon',
                   category: 'dairy',
-                  expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                  expirationDate: new Date(Date.now() + 7 * 86400000)
                     .toISOString()
                     .split('T')[0],
                 });
@@ -134,7 +132,6 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
                 onChange={handleChange}
                 required
                 className="w-1/2 px-3 py-2 border rounded"
-                placeholder="1"
               />
               <select
                 name="unit"
@@ -216,32 +213,6 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
               <option value="freezer">Freezer</option>
               <option value="pantry">Pantry</option>
             </select>
-          </div>
-
-          {showNotes && (
-            <div>
-              <label htmlFor="notes" className="block text-sm text-gray-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border rounded"
-                placeholder="Add any additional details..."
-              />
-            </div>
-          )}
-
-          <div className="flex justify-between text-sm">
-            <button type="button" onClick={() => setShowNotes(!showNotes)} className="text-blue-600">
-              {showNotes ? 'Hide Notes' : 'Add Notes'}
-            </button>
-            <button type="button" onClick={() => setShowScanner(true)} className="text-blue-600">
-              Scan Receipt
-            </button>
           </div>
 
           <div className="flex justify-end space-x-2">
