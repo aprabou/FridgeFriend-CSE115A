@@ -13,6 +13,7 @@ export interface FoodItem {
   location: string;
   notes?: string;
   user_id: string;
+  household_id: string;
   created_at: string;
 }
 
@@ -48,24 +49,29 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      fetchItems();
-    } else {
-      setItems([]);
-      setLoading(false);
-    }
-  }, [user]);
-
   const fetchItems = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      const { data: householdMember } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', user?.id)
+        .eq('status', 'accepted')
+        .single();
+
+      const householdId = householdMember?.household_id;
+
+      if (!householdId) {
+        setItems([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('fridge_items')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('household_id', householdId)
         .order('expiration', { ascending: true });
 
       if (error) throw error;
@@ -78,15 +84,76 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const addItem = async (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => {
-  try {
-    await fetchItems(); // ✅ just re-fetch items from Supabase
-  } catch (error: any) {
-    console.error('Error refreshing items after add:', error);
-    setError(error.message);
-  }
-};
+  useEffect(() => {
+    if (user?.id) {
+      fetchItems();
 
+      // Subscribe to real-time changes scoped by household_id
+      const setupRealtime = async () => {
+        const { data: householdMember } = await supabase
+          .from('household_members')
+          .select('household_id')
+          .eq('user_id', user.id)
+          .eq('status', 'accepted')
+          .single();
+
+        const householdId = householdMember?.household_id;
+
+        if (householdId) {
+          const channel = supabase
+            .channel('fridge_sync')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'fridge_items',
+                filter: `household_id=eq.${householdId}`,
+              },
+              () => {
+                fetchItems();
+              }
+            )
+            .subscribe();
+
+          return () => {
+            supabase.removeChannel(channel);
+          };
+        }
+      };
+
+      setupRealtime();
+    }
+  }, [user?.id]);
+
+  const addItem = async (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => {
+    try {
+      const { data: householdMember } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', user?.id)
+        .eq('status', 'accepted')
+        .single();
+
+      const householdId = householdMember?.household_id;
+
+      if (!householdId) {
+        throw new Error('User is not in an accepted household.');
+      }
+
+      const { error } = await supabase.from('fridge_items').insert({
+        ...item,
+        user_id: user?.id,
+        household_id: householdId,
+      });
+
+      if (error) throw error;
+      await fetchItems();
+    } catch (error: any) {
+      console.error('Error adding item:', error);
+      setError(error.message);
+    }
+  };
 
   const updateItem = async (id: string, updates: Partial<FoodItem>) => {
     try {

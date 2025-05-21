@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { XIcon, CameraIcon } from 'lucide-react';
 import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface AddItemFormProps {
   onClose: () => void;
@@ -9,8 +8,6 @@ interface AddItemFormProps {
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
   const { addItem } = useInventory();
-  const { user } = useAuth();
-
   const [showScanner, setShowScanner] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -41,23 +38,14 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
       purchased: formData.purchaseDate,
       location: formData.storageLocation,
       quantity: formData.quantity,
-      user_id: user?.id,
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/add-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error('Failed to add item to backend');
-
-      await addItem(payload); // ✅ add it to Supabase via context
+      await addItem(payload); // handled fully by context, including household/user ID
       onClose();
     } catch (err) {
       console.error('❌ Error adding item:', err);
-      alert('Failed to add item. Please check the backend.');
+      alert('Failed to add item. Please try again.');
     }
   };
 

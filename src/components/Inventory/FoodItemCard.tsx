@@ -71,12 +71,14 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
           <button 
             onClick={() => onEdit(item)}
             className="p-1 rounded-full hover:bg-white hover:bg-opacity-30"
+            title="Edit"
           >
             <EditIcon size={16} className={status.textColor} />
           </button>
           <button 
             onClick={() => onDelete(item.id)}
             className="p-1 rounded-full hover:bg-white hover:bg-opacity-30"
+            title="Delete"
           >
             <Trash2Icon size={16} className={status.textColor} />
           </button>
