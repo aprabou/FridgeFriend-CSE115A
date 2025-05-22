@@ -13,6 +13,7 @@ type NotifKeys =
 const Settings: React.FC = () => {
   const { profile, loading, error, saveProfile, fetchProfile } = useProfile();
   const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [householdForm, setHouseholdForm] = useState({
@@ -90,6 +91,9 @@ const Settings: React.FC = () => {
     if (profile?.name) {
       setName(profile.name);
     }
+    if (profile?.number) {
+      setNumber(profile.number);
+    }
   }, [profile]);
 
   const handleInviteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +102,7 @@ const Settings: React.FC = () => {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveProfile({ name });
+    await saveProfile({ name, number });
   };
 
   const handleLogout = async () => {
@@ -172,6 +176,22 @@ const Settings: React.FC = () => {
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="number"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Number
+                  </label>
+                  <input
+                    type="text"
+                    id="number"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
                     className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
                     disabled={loading}
                   />

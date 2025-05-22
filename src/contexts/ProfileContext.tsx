@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 interface Profile {
   id: string;
   name: string | null;
+  number: string;
 }
 
 interface ProfileContextType {
@@ -12,7 +13,10 @@ interface ProfileContextType {
   loading: boolean;
   error: string | null;
   fetchProfile: () => Promise<void>;
-  saveProfile: (fields: { name: string | null }) => Promise<void>;
+  saveProfile: (fields: {
+    name: string | null;
+    number: string;
+  }) => Promise<void>;
   setProfile: (profile: Profile | null) => void; // New function
 }
 
@@ -46,7 +50,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   };
 
   /* ---------- 3. Save profile (upsert) ---------- */
-  const saveProfile = async (fields: { name: string | null }) => {
+  const saveProfile = async (fields: {
+    name: string | null;
+    number: string;
+  }) => {
     if (!user) return;
     setLoading(true);
     setError(null);
