@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { UserIcon, UsersIcon, BellIcon, MailIcon } from "lucide-react";
 import { useProfile } from "../contexts/ProfileContext";
+import { supabase } from "../lib/supabaseClient";
+
+type NotifKeys =
+  | "expiryNotifications"
+  | "inventoryUpdates"
+  | "recipeRecommendations"
+  | "emailNotifications";
 
 const Settings: React.FC = () => {
   const { profile, loading, error, saveProfile, fetchProfile } = useProfile();
@@ -22,7 +29,62 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     fetchProfile();
+    fetchNotificationSettings();
   }, []);
+
+  const fetchNotificationSettings = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(
+        `
+        expiry_notifications,
+        inventory_updates,
+        recipe_recommendations,
+        email_notifications
+      `
+      )
+      .eq("id", user!.id)
+      .single();
+
+    if (error) {
+      console.error("Error loading notification settings:", error);
+      return;
+    }
+
+    setNotificationSettings({
+      expiryNotifications: data.expiry_notifications,
+      inventoryUpdates: data.inventory_updates,
+      recipeRecommendations: data.recipe_recommendations,
+      emailNotifications: data.email_notifications,
+    });
+  };
+
+  const handleSaveNotificationSettings = async () => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        expiry_notifications: notificationSettings.expiryNotifications,
+        inventory_updates: notificationSettings.inventoryUpdates,
+        recipe_recommendations: notificationSettings.recipeRecommendations,
+        email_notifications: notificationSettings.emailNotifications,
+      })
+      .eq("id", user!.id);
+
+    if (error) {
+      console.error("Failed to save notification settings:", error);
+      alert("❌ Failed to save notification settings.");
+    } else {
+      alert("✅ Notification settings saved!");
+    }
+  };
+
+  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setNotificationSettings((prev) => ({
+      ...prev,
+      [name as NotifKeys]: checked,
+    }));
+  };
 
   useEffect(() => {
     if (profile?.name) {
@@ -32,18 +94,6 @@ const Settings: React.FC = () => {
 
   const handleInviteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHouseholdForm((prev) => ({ ...prev, inviteEmail: e.target.value }));
-  };
-
-  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setNotificationSettings((prev) => ({ ...prev, [name]: checked }));
-  };
-
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate sending invitation
-    alert(`Invitation sent to ${householdForm.inviteEmail}`);
-    setHouseholdForm((prev) => ({ ...prev, inviteEmail: "" }));
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -112,18 +162,18 @@ const Settings: React.FC = () => {
                 {error && <div className="text-red-500 text-sm">{error}</div>}
                 <div>
                   <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                  Name
+                    Name
                   </label>
                   <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  disabled={loading}
+                    type="text"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                    disabled={loading}
                   />
                 </div>
                 <button
@@ -293,113 +343,29 @@ const Settings: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-800 mb-4">
                 Notification Preferences
               </h3>
-
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="expiryNotifications"
-                      name="expiryNotifications"
-                      type="checkbox"
-                      checked={notificationSettings.expiryNotifications}
-                      onChange={handleNotificationChange}
-                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label
-                      htmlFor="expiryNotifications"
-                      className="font-medium text-gray-700"
-                    >
-                      Expiry Notifications
-                    </label>
-                    <p className="text-gray-500 text-sm">
-                      Receive notifications when food items are about to expire.
-                    </p>
-                  </div>
+              {Object.entries(notificationSettings).map(([key, value]) => (
+                <div key={key} className="flex items-start">
+                  <input
+                    id={key}
+                    name={key}
+                    type="checkbox"
+                    checked={value}
+                    onChange={handleNotificationChange}
+                    className="h-4 w-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor={key} className="ml-3 text-sm text-gray-700">
+                    {key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (str) => str.toUpperCase())}
+                  </label>
                 </div>
-
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="inventoryUpdates"
-                      name="inventoryUpdates"
-                      type="checkbox"
-                      checked={notificationSettings.inventoryUpdates}
-                      onChange={handleNotificationChange}
-                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label
-                      htmlFor="inventoryUpdates"
-                      className="font-medium text-gray-700"
-                    >
-                      Inventory Updates
-                    </label>
-                    <p className="text-gray-500 text-sm">
-                      Receive notifications when household members update the
-                      shared inventory.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="recipeRecommendations"
-                      name="recipeRecommendations"
-                      type="checkbox"
-                      checked={notificationSettings.recipeRecommendations}
-                      onChange={handleNotificationChange}
-                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label
-                      htmlFor="recipeRecommendations"
-                      className="font-medium text-gray-700"
-                    >
-                      Recipe Recommendations
-                    </label>
-                    <p className="text-gray-500 text-sm">
-                      Receive weekly recipe recommendations based on your
-                      inventory.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start pt-4 border-t border-gray-200">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="emailNotifications"
-                      name="emailNotifications"
-                      type="checkbox"
-                      checked={notificationSettings.emailNotifications}
-                      onChange={handleNotificationChange}
-                      className="focus:ring-green-500 h-4 w-4 text-green-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label
-                      htmlFor="emailNotifications"
-                      className="font-medium text-gray-700"
-                    >
-                      Email Notifications
-                    </label>
-                    <p className="text-gray-500 text-sm">
-                      Receive notifications via email in addition to in-app
-                      notifications.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              ))}
 
               <div className="pt-4">
                 <button
                   type="button"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                  onClick={() => alert("Notification settings saved!")}
+                  onClick={handleSaveNotificationSettings}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
                 >
                   Save Preferences
                 </button>
