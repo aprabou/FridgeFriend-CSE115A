@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '../contexts/useInventory'; // ✅ fixed import
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';
 import { SearchIcon, RefreshCwIcon } from 'lucide-react';
+import RecipeList from '../components/Recipes/RecipeList';
 
 
 const mockRecipes: Recipe[] = [
@@ -190,7 +191,7 @@ const Recipes: React.FC = () => {
         <p className="text-gray-600">Discover recipes based on what's in your inventory.</p>
       </header>
       
-      {items.length === 0 ? (
+      {/* {items.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">Add items to get recipe suggestions</h2>
           <p className="text-gray-600 mb-6">
@@ -263,7 +264,10 @@ const Recipes: React.FC = () => {
             </p>
           </div>
         </>
-      )}
+      )} */}
+      <div>
+        <RecipeList />
+      </div>
     </div>
   );
 };
