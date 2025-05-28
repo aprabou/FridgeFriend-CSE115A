@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth'; // ✅ updated path
 import { ShoppingBagIcon } from 'lucide-react';
 
 const Login: React.FC = () => {
@@ -13,23 +13,21 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
-    
+
+    setError('');
+    setLoading(true);
     try {
-      setError('');
-      setLoading(true);
-      const { error } = await signIn(email, password);
-      
-      if (error) throw error;
-      
+      // signIn throws on error, so no destructuring needed
+      await signIn(email, password);
       navigate('/');
-    } catch (error: any) {
-      console.error('Login error:', error);
-      setError(error?.message || 'Failed to sign in');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err?.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -63,7 +61,7 @@ const Login: React.FC = () => {
               {error}
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -131,7 +129,7 @@ const Login: React.FC = () => {
               </button>
             </div>
           </form>
-          
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

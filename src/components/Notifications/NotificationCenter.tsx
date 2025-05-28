@@ -1,6 +1,7 @@
 import React from 'react';
 import { XIcon, CheckIcon } from 'lucide-react';
-import { useNotifications } from '../../contexts/NotificationContext';
+//import { useNotifications } from '../../contexts/NotificationContext';
+import { useNotifications } from '../../contexts/useNotifications';
 
 interface NotificationCenterProps {
   onClose: () => void;

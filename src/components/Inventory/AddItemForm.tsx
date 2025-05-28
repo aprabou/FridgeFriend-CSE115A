@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
 import { XIcon, CameraIcon } from 'lucide-react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { FoodItem } from '../../contexts/InventoryContext';
 
 interface AddItemFormProps {
+  /** existing item when editing */
+  item?: FoodItem | null;
+  /** called with new/updated payload */
+  onSubmit: (
+    data: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+  ) => Promise<void>;
   onClose: () => void;
 }
 
-const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
-  const { addItem } = useInventory();
+const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClose }) => {
   const [showScanner, setShowScanner] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    quantity: 1,
-    unit: 'piece',
-    category: 'dairy',
-    purchaseDate: new Date().toISOString().split('T')[0],
-    expirationDate: '',
-    storageLocation: 'refrigerator',
-  });
+  const [formData, setFormData] = useState(() => ({
+    name: item?.name || '',
+    quantity: item?.quantity || 1,
+    unit: item?.unit || 'piece',
+    category: item?.category || 'dairy',
+    purchaseDate:
+      (item?.purchased && item.purchased.split('T')[0]) ||
+      new Date().toISOString().split('T')[0],
+    expirationDate: (item?.expiration && item.expiration.split('T')[0]) || '',
+    storageLocation: item?.location || 'refrigerator',
+  }));
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -30,29 +36,32 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
+    const payload: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'> = {
       name: formData.name,
-      expiration: formData.expirationDate,
-      category: formData.category,
-      unit: formData.unit,
-      purchased: formData.purchaseDate,
-      location: formData.storageLocation,
       quantity: formData.quantity,
+      unit: formData.unit,
+      category: formData.category,
+      purchased: formData.purchaseDate,
+      expiration: formData.expirationDate,
+      location: formData.storageLocation,
     };
 
     try {
-      await addItem(payload); // handled fully by context, including household/user ID
+      console.log('AddItemForm.handleSubmit', payload);
+      await onSubmit(payload);
       onClose();
     } catch (err) {
-      console.error('❌ Error adding item:', err);
-      alert('Failed to add item. Please try again.');
+      console.error('❌ Error submitting item:', err);
+      alert('Failed to save item. Please try again.');
     }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
       <div className="flex items-center justify-between bg-green-500 text-white px-4 py-3">
-        <h2 className="text-lg font-semibold">Add New Item</h2>
+        <h2 className="text-lg font-semibold">
+          {item ? 'Edit Item' : 'Add New Item'}
+        </h2>
         <button onClick={onClose} className="text-white hover:text-gray-200">
           <XIcon size={20} />
         </button>
@@ -65,12 +74,14 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
           </div>
           <div className="flex justify-between mt-4">
             <button
+              type="button"
               className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg"
               onClick={() => setShowScanner(false)}
             >
               Cancel
             </button>
             <button
+              type="button"
               className="px-4 py-2 text-white bg-blue-500 rounded-lg"
               onClick={() => {
                 setFormData({
@@ -79,7 +90,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
                   quantity: 1,
                   unit: 'gallon',
                   category: 'dairy',
-                  expirationDate: new Date(Date.now() + 7 * 86400000)
+                  expirationDate: new Date(
+                    Date.now() + 7 * 86400000
+                  )
                     .toISOString()
                     .split('T')[0],
                 });
@@ -92,8 +105,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Item Name */}
           <div>
-            <label className="block text-sm text-gray-700 mb-1" htmlFor="name">
+            <label htmlFor="name" className="block text-sm text-gray-700 mb-1">
               Item Name*
             </label>
             <input
@@ -108,8 +122,11 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             />
           </div>
 
+          {/* Quantity & Unit */}
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Quantity & Unit*</label>
+            <label className="block text-sm text-gray-700 mb-1">
+              Quantity & Unit*
+            </label>
             <div className="flex space-x-2">
               <input
                 type="number"
@@ -136,6 +153,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             </div>
           </div>
 
+          {/* Purchase Date */}
           <div>
             <label htmlFor="purchaseDate" className="block text-sm text-gray-700 mb-1">
               Purchase Date*
@@ -150,6 +168,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             />
           </div>
 
+          {/* Expiration Date */}
           <div>
             <label htmlFor="expirationDate" className="block text-sm text-gray-700 mb-1">
               Expiration Date*
@@ -165,6 +184,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             />
           </div>
 
+          {/* Category */}
           <div>
             <label htmlFor="category" className="block text-sm text-gray-700 mb-1">
               Category*
@@ -185,6 +205,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             </select>
           </div>
 
+          {/* Storage Location */}
           <div>
             <label htmlFor="storageLocation" className="block text-sm text-gray-700 mb-1">
               Storage Location*
@@ -203,6 +224,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
             </select>
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end space-x-2">
             <button
               type="button"
@@ -215,7 +237,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ onClose }) => {
               type="submit"
               className="px-4 py-2 bg-green-500 text-white rounded"
             >
-              Add Item
+              {item ? 'Save Changes' : 'Add Item'}
             </button>
           </div>
         </form>
