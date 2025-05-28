@@ -1,7 +1,7 @@
 import React from 'react';
 import ExpirationSummary from '../components/Dashboard/ExpirationSummary';
 import StorageDistribution from '../components/Dashboard/StorageDistribution';
-import { useInventory } from '../contexts/InventoryContext';
+import { useInventory } from '../contexts/useInventory'; // ✅ correct import
 import { Link } from 'react-router-dom';
 import { PlusIcon, CookingPotIcon } from 'lucide-react';
 

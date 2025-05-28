@@ -1,11 +1,18 @@
+// src/contexts/ProfileContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import { supabase } from "../lib/supabaseClient";
 
-interface Profile {
+// Define the shape of your Profile
+export interface Profile {
   id: string;
   name: string | null;
-  number: string;
+  number: string | null;
+  household_id: string | null;
+  expiry_notifications: boolean;
+  inventory_updates: boolean;
+  recipe_recommendations: boolean;
+  email_notifications: boolean;
 }
 
 interface ProfileContextType {
@@ -13,14 +20,11 @@ interface ProfileContextType {
   loading: boolean;
   error: string | null;
   fetchProfile: () => Promise<void>;
-  saveProfile: (fields: {
-    name: string | null;
-    number: string;
-  }) => Promise<void>;
-  setProfile: (profile: Profile | null) => void; // New function
+  saveProfile: (fields: Partial<Profile>) => Promise<void>;
+  setProfile: (profile: Profile | null) => void;
 }
 
-const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
+export const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -28,42 +32,28 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------- 1. Fetch or create profile ---------- */
   const fetchProfile = async () => {
-    if (!user) return; // guard against race on logout
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle(); // won’t throw on 0 rows
-
-      if (error) throw error;
-      setProfileState(data); // Update profile state
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ---------- 3. Save profile (upsert) ---------- */
-  const saveProfile = async (fields: {
-    name: string | null;
-    number: string;
-  }) => {
     if (!user) return;
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase
+      const { data, error: fetchErr } = await supabase
         .from("profiles")
-        .upsert({ id: user.id, ...fields }, { onConflict: "id" }); // ← key line
+        .select(`
+          id,
+          name,
+          number,
+          household_id,
+          expiry_notifications,
+          inventory_updates,
+          recipe_recommendations,
+          email_notifications
+        `)
+        .eq("id", user.id)
+        .single();
 
-      if (error) throw error;
-      await fetchProfile(); // refresh local copy
+      if (fetchErr) throw fetchErr;
+      setProfileState(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -71,15 +61,29 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  /* ---------- 4. Auto-fetch once on mount / user change ---------- */
+  const saveProfile = async (fields: Partial<Profile>) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { error: upsertErr } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, ...fields }, { onConflict: "id" });
+      if (upsertErr) throw upsertErr;
+      await fetchProfile();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  /* ---------- 5. Set profile directly ---------- */
-  const setProfile = (profile: Profile | null) => {
-    setProfileState(profile);
+  const setProfile = (p: Profile | null) => {
+    setProfileState(p);
   };
 
   return (
@@ -91,9 +95,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ---------- Hook ---------- */
-export const useProfile = () => {
-  const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error("useProfile must be used within ProfileProvider");
-  return ctx;
-};
+export function useProfile() {
+  const context = useContext(ProfileContext);
+  if (!context) {
+    throw new Error("useProfile must be used within a ProfileProvider");
+  }
+  return context;
+}

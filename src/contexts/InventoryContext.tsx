@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// src/contexts/InventoryContext.tsx
+
+import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
+import { useContext } from 'react';
 
 export interface FoodItem {
   id: string;
@@ -21,7 +24,9 @@ interface InventoryContextType {
   items: FoodItem[];
   loading: boolean;
   error: string | null;
-  addItem: (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
+  addItem: (
+    item: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+  ) => Promise<void>;
   updateItem: (id: string, updates: Partial<FoodItem>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   getSoonToExpire: () => FoodItem[];
@@ -29,7 +34,7 @@ interface InventoryContextType {
   refetchItems: () => Promise<void>;
 }
 
-const InventoryContext = createContext<InventoryContextType>({
+export const InventoryContext = createContext<InventoryContextType>({
   items: [],
   loading: false,
   error: null,
@@ -41,169 +46,177 @@ const InventoryContext = createContext<InventoryContextType>({
   refetchItems: async () => {},
 });
 
-export const useInventory = () => useContext(InventoryContext);
-
-export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { user } = useAuth();
   const [items, setItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
   const fetchItems = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const { data: householdMember } = await supabase
+      // 1) fetch all accepted household IDs for this user
+      const { data: memberships, error: memErr } = await supabase
         .from('household_members')
         .select('household_id')
         .eq('user_id', user?.id)
-        .eq('status', 'accepted')
-        .single();
+        .eq('status', 'accepted');
+      if (memErr) throw memErr;
 
-      const householdId = householdMember?.household_id;
-
-      if (!householdId) {
+      if (!memberships || memberships.length === 0) {
         setItems([]);
         return;
       }
 
-      const { data, error } = await supabase
+      const householdIds = memberships.map((m) => m.household_id);
+
+      // 2) fetch items for any of those households
+      const { data: fetchedItems, error: fetchError } = await supabase
         .from('fridge_items')
         .select('*')
-        .eq('household_id', householdId)
+        .in('household_id', householdIds)
         .order('expiration', { ascending: true });
+      if (fetchError) throw fetchError;
 
-      if (error) throw error;
-      setItems(data ?? []);
-    } catch (error: any) {
-      console.error('Error fetching inventory:', error);
-      setError(error.message);
+      setItems(fetchedItems ?? []);
+    } catch (err: any) {
+      console.error('Error fetching inventory:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user?.id) {
-      fetchItems();
+    if (!user?.id) return;
+    // initial load
+    fetchItems();
 
-      // Subscribe to real-time changes scoped by household_id
-      const setupRealtime = async () => {
-        const { data: householdMember } = await supabase
-          .from('household_members')
-          .select('household_id')
-          .eq('user_id', user.id)
-          .eq('status', 'accepted')
-          .single();
-
-        const householdId = householdMember?.household_id;
-
-        if (householdId) {
-          const channel = supabase
-            .channel('fridge_sync')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'fridge_items',
-                filter: `household_id=eq.${householdId}`,
-              },
-              () => {
-                fetchItems();
-              }
-            )
-            .subscribe();
-
-          return () => {
-            supabase.removeChannel(channel);
-          };
-        }
-      };
-
-      setupRealtime();
-    }
-  }, [user?.id]);
-
-  const addItem = async (item: Omit<FoodItem, 'id' | 'user_id' | 'created_at'>) => {
-    try {
-      const { data: householdMember } = await supabase
+    // subscribe to changes on all accepted households
+    (async () => {
+      const { data: memberships } = await supabase
         .from('household_members')
         .select('household_id')
-        .eq('user_id', user?.id)
-        .eq('status', 'accepted')
-        .single();
+        .eq('user_id', user.id)
+        .eq('status', 'accepted');
+      if (!memberships) return;
 
-      const householdId = householdMember?.household_id;
+      const channels = memberships.map(({ household_id }) =>
+        supabase
+          .channel(`fridge_sync_${household_id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'fridge_items',
+              filter: `household_id=eq.${household_id}`,
+            },
+            fetchItems
+          )
+          .subscribe()
+      );
 
-      if (!householdId) {
+      // cleanup
+      return () => {
+        channels.forEach((ch) => supabase.removeChannel(ch));
+      };
+    })();
+  }, [user?.id]);
+
+  const addItem = async (
+    item: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+  ) => {
+    setError(null);
+    try {
+      // fetch all accepted household memberships
+      const { data: memberships, error: memErr } = await supabase
+        .from('household_members')
+        .select('household_id, role')
+        .eq('user_id', user!.id)
+        .eq('status', 'accepted');
+      if (memErr) throw memErr;
+      if (!memberships || memberships.length === 0) {
         throw new Error('User is not in an accepted household.');
       }
 
-      const { error } = await supabase.from('fridge_items').insert({
-        ...item,
-        user_id: user?.id,
-        household_id: householdId,
-      });
+      // pick the owner household if present, otherwise the first
+      const householdId =
+        memberships.find((m) => m.role === 'owner')?.household_id ||
+        memberships[0].household_id;
 
-      if (error) throw error;
-      await fetchItems();
-    } catch (error: any) {
-      console.error('Error adding item:', error);
-      setError(error.message);
+      // insert the new item
+      const { data: newItem, error: insertError } = await supabase
+        .from('fridge_items')
+        .insert([
+          {
+            ...item,
+            user_id: user!.id,
+            household_id: householdId,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      setItems((prev) => [...prev, newItem]);
+    } catch (err: any) {
+      console.error('Error adding item:', err);
+      setError(err.message);
     }
   };
 
   const updateItem = async (id: string, updates: Partial<FoodItem>) => {
+    setError(null);
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('fridge_items')
         .update(updates)
         .eq('id', id);
-
-      if (error) throw error;
+      if (updateError) throw updateError;
       await fetchItems();
-    } catch (error: any) {
-      console.error('Error updating item:', error);
-      setError(error.message);
+    } catch (err: any) {
+      console.error('Error updating item:', err);
+      setError(err.message);
     }
   };
 
   const deleteItem = async (id: string) => {
+    setError(null);
     try {
-      const { error } = await supabase
+      const { error: deleteError } = await supabase
         .from('fridge_items')
         .delete()
         .eq('id', id);
-
-      if (error) throw error;
-      setItems((prev) => prev.filter((item) => item.id !== id));
-    } catch (error: any) {
-      console.error('Error deleting item:', error);
-      setError(error.message);
+      if (deleteError) throw deleteError;
+      setItems((prev) => prev.filter((it) => it.id !== id));
+    } catch (err: any) {
+      console.error('Error deleting item:', err);
+      setError(err.message);
     }
   };
 
   const getSoonToExpire = () => {
     const today = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(today.getDate() + 7);
-
-    return items.filter((item) => {
-      const expDate = new Date(item.expiration);
-      return expDate >= today && expDate <= sevenDaysFromNow;
+    const inSeven = new Date();
+    inSeven.setDate(today.getDate() + 7);
+    return items.filter((it) => {
+      const exp = new Date(it.expiration);
+      return exp >= today && exp <= inSeven;
     });
   };
 
-  const getStorageLocationCounts = () => {
-    return items.reduce((acc, item) => {
-      acc[item.location] = (acc[item.location] || 0) + 1;
+  const getStorageLocationCounts = () =>
+    items.reduce((acc, it) => {
+      acc[it.location] = (acc[it.location] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-  };
 
-  const value = {
+  const value: InventoryContextType = {
     items,
     loading,
     error,
@@ -215,5 +228,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     refetchItems: fetchItems,
   };
 
-  return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;
+  return (
+    <InventoryContext.Provider value={value}>
+      {children}
+    </InventoryContext.Provider>
+  );
+};
+
+export const useInventory = () => {
+  const context = useContext(InventoryContext);
+  if (!context) {
+    throw new Error('useInventory must be used within an InventoryProvider');
+  }
+  return context;
 };

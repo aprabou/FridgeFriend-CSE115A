@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useInventory, FoodItem } from '../contexts/InventoryContext';
+import { useInventory } from '../contexts/useInventory'; // ✅ fixed import
+import { FoodItem } from '../contexts/InventoryContext';
 import FoodItemCard from '../components/Inventory/FoodItemCard';
 import AddItemForm from '../components/Inventory/AddItemForm';
-import { PlusIcon, FilterIcon, XIcon } from 'lucide-react';
+import { PlusIcon, FilterIcon } from 'lucide-react';
 
 const Inventory: React.FC = () => {
-  const { items, loading, deleteItem } = useInventory();
+  const { items, loading, deleteItem, addItem, updateItem } = useInventory();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [filters, setFilters] = useState({
@@ -27,15 +28,28 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+  const handleFormSubmit = async (
+    data: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+  ) => {
+    if (editingItem) {
+      await updateItem(editingItem.id, data);
+    } else {
+      console.log('Inventory.handleFormSubmit', data, { editingItem });
+      await addItem(data);
+    }
+    setShowAddForm(false);
+    setEditingItem(null);
   };
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setFilters(prev => ({
+  const toggleFilters = () => setShowFilters(!showFilters);
+
+  const handleFilterChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
+    setFilters((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -48,28 +62,25 @@ const Inventory: React.FC = () => {
     });
   };
 
-  // Apply filters
   const filteredItems = items.filter(item => {
-  const matchesLocation = !filters.location || item.location === filters.location;
-  const matchesCategory = !filters.category || item.category === filters.category;
+    const matchesLocation = !filters.location || item.location === filters.location;
+    const matchesCategory = !filters.category || item.category === filters.category;
 
-  const matchesExpiringSoon = !filters.expiringSoon || (() => {
-    const today = new Date();
-    const expDate = new Date(item.expiration); // ✅ was item.expirationDate
-    const daysUntilExpiration = Math.ceil(
-      (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    return daysUntilExpiration >= 0 && daysUntilExpiration <= 7;
-  })();
+    const matchesExpiringSoon = !filters.expiringSoon || (() => {
+      const today = new Date();
+      const expDate = new Date(item.expiration);
+      const daysUntilExpiration = Math.ceil(
+        (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysUntilExpiration >= 0 && daysUntilExpiration <= 7;
+    })();
 
-  const matchesSearch = !filters.search || 
-    item.name.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesSearch = !filters.search ||
+      item.name.toLowerCase().includes(filters.search.toLowerCase());
 
-  return matchesLocation && matchesCategory && matchesExpiringSoon && matchesSearch;
-});
+    return matchesLocation && matchesCategory && matchesExpiringSoon && matchesSearch;
+  });
 
-
-  // Get unique values for dropdowns
   const locations = [...new Set(items.map(item => item.location))];
   const categories = [...new Set(items.map(item => item.category))];
 
@@ -90,7 +101,7 @@ const Inventory: React.FC = () => {
             {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'} in your inventory
           </p>
         </div>
-        
+
         <div className="flex space-x-3 mt-3 sm:mt-0">
           <button
             onClick={toggleFilters}
@@ -99,7 +110,7 @@ const Inventory: React.FC = () => {
             <FilterIcon size={18} className="mr-1" />
             Filter
           </button>
-          
+
           <button
             onClick={() => setShowAddForm(true)}
             className="flex items-center px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
@@ -109,7 +120,7 @@ const Inventory: React.FC = () => {
           </button>
         </div>
       </header>
-      
+
       {showFilters && (
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
           <div className="flex justify-between items-center mb-3">
@@ -121,7 +132,7 @@ const Inventory: React.FC = () => {
               Reset
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
@@ -137,7 +148,7 @@ const Inventory: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-            
+
             <div>
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
                 Storage Location
@@ -157,7 +168,7 @@ const Inventory: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
                 Category
@@ -177,7 +188,7 @@ const Inventory: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="flex items-end">
               <label className="flex items-center text-sm font-medium text-gray-700">
                 <input
@@ -193,7 +204,7 @@ const Inventory: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {filteredItems.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <p className="text-gray-600 mb-4">No items match your current filters.</p>
@@ -227,10 +238,12 @@ const Inventory: React.FC = () => {
           ))}
         </div>
       )}
-      
+
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0	bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <AddItemForm
+            item={editingItem}
+            onSubmit={handleFormSubmit}
             onClose={() => {
               setShowAddForm(false);
               setEditingItem(null);

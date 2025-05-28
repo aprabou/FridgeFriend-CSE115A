@@ -1,6 +1,7 @@
 import React from 'react';
 import { PackageIcon } from 'lucide-react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useInventory } from '../../contexts/useInventory'; // ✅ correct path
+
 
 const StorageDistribution: React.FC = () => {
   const { getStorageLocationCounts } = useInventory();

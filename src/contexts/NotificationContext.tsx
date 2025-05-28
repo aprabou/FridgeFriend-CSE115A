@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useInventory } from "./InventoryContext";
-import { useAuth } from "./AuthContext";
+import React, { createContext, useState, useEffect } from "react";
+import { useInventory } from "./useInventory"; // ✅ updated import
+import { useAuth } from "./useAuth"; // ✅ updated import
 
 interface Notification {
   id: string;
@@ -22,7 +22,8 @@ interface NotificationContextType {
   clearNotifications: () => void;
 }
 
-const NotificationContext = createContext<NotificationContextType>({
+// ✅ Export this so useNotifications.ts can import it
+export const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
   unreadCount: 0,
   addNotification: () => {},
@@ -31,8 +32,6 @@ const NotificationContext = createContext<NotificationContextType>({
   clearNotifications: () => {},
 });
 
-export const useNotifications = () => useContext(NotificationContext);
-
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -40,7 +39,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const { items } = useInventory();
   const { user } = useAuth();
 
-  // Calculate unread notifications count
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
@@ -50,15 +48,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(today.getDate() + 3);
 
-    // Find items expiring in the next 3 days
     const expiringItems = items.filter((item) => {
-      const expDate = new Date(item.expirationDate);
+      const expDate = new Date(item.expiration);
       return expDate >= today && expDate <= threeDaysFromNow;
     });
 
-    // Generate notifications for expiring items
     expiringItems.forEach((item) => {
-      const expDate = new Date(item.expirationDate);
+      const expDate = new Date(item.expiration);
       const daysUntilExpiration = Math.ceil(
         (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
       );

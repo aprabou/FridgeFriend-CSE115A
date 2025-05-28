@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlarmClockIcon } from 'lucide-react';
-import { useInventory, FoodItem } from '../../contexts/InventoryContext';
+import { useInventory } from '../../contexts/useInventory'; // ✅ updated import
+import { FoodItem } from '../../contexts/InventoryContext'; // ✅ keep this for types
 import { Link } from 'react-router-dom';
 
 const ExpirationSummary: React.FC = () => {
