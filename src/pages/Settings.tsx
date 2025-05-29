@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/useAuth";
 import { useProfile } from "../contexts/useProfile";
-import type { Profile } from "../contexts/ProfileContext";
 import { supabase } from "../lib/supabaseClient";
 import { createHousehold } from "../lib/householdService";
 import { UserIcon, UsersIcon, BellIcon } from "lucide-react";
@@ -31,6 +30,81 @@ const Settings: React.FC = () => {
     inviteEmail: "",
   });
   const [householdError, setHouseholdError] = useState<string | null>(null);
+
+  interface HouseholdMember {
+    id: string;
+    user_id: string;
+    role: string;
+    status: string;
+    profiles: {
+      id: string;
+      email: string;
+      name: string;
+    };
+  }
+
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>(
+    []
+  );
+
+  const fetchHouseholdMembers = async () => {
+    try {
+      // Step 1: Fetch household members
+      const { data: members, error: membersError } = await supabase
+        .from("household_members")
+        .select("id, user_id, role, status")
+        .eq("household_id", profile?.household_id);
+
+      if (membersError) {
+        console.error(membersError);
+        return alert("Failed to fetch household members.");
+      }
+
+      if (!members || members.length === 0) {
+        console.warn("No household members found.");
+        setHouseholdMembers([]);
+        return;
+      }
+
+      console.log("Household Members:", members);
+
+      // Extract user IDs
+      const userIds = members.map((member) => member.user_id);
+
+      // Step 2: Fetch profiles for the user IDs
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, name")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error(profilesError);
+        return alert("Failed to fetch user profiles.");
+      }
+
+      console.log("Profiles:", profiles);
+
+      // Step 3: Combine household members with their profiles
+      const combinedData = members.map((member) => ({
+        ...member,
+        profiles: profiles.find((profile) => profile.id === member.user_id) || {
+          id: "",
+          email: "",
+          name: "",
+        },
+      }));
+
+      setHouseholdMembers(combinedData);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (profile?.household_id) {
+      fetchHouseholdMembers();
+    }
+  }, [profile?.household_id]);
 
   // Notification prefs
   const [notificationSettings, setNotificationSettings] = useState({
@@ -74,6 +148,7 @@ const Settings: React.FC = () => {
       console.warn("User has no household yet.");
       return;
     }
+    console.log("Your Household ID:", profData.household_id);
     const { data: household, error: householdErr } = await supabase
       .from("households")
       .select("name")
@@ -259,7 +334,7 @@ const Settings: React.FC = () => {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveProfile({ name, number });
+    await saveProfile({ name });
   };
 
   const handleLogout = async () => {
@@ -345,6 +420,30 @@ const Settings: React.FC = () => {
                 >
                   Save Household Name
                 </button>
+              </div>
+
+              <div className="mt-5">
+                <h2 className="text-lg font-bold">Household Members</h2>
+                <ul className="mt-3 space-y-2">
+                  {householdMembers.map((member) => (
+                    <li
+                      key={member.id}
+                      className="flex items-center justify-between p-2 border rounded-md"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {member.profiles?.name || "Unknown"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {member.profiles?.email}
+                        </p>
+                      </div>
+                      <span className="text-sm text-gray-700 capitalize">
+                        {member.role}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               {/* Invite by Email */}
