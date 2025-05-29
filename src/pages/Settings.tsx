@@ -433,13 +433,22 @@ const Settings: React.FC = () => {
                   className="mt-1 block w-full border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 />
               </div>
-              <button
-                type="submit"
-                disabled={profileLoading}
-                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
-              >
-                {profileLoading ? "Saving..." : "Save Changes"}
-              </button>
+              <div className="flex flex-col space-y-5">
+                <button
+                  type="submit"
+                  disabled={profileLoading}
+                  className="w-40 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+                >
+                  {profileLoading ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-40 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                >
+                  Sign Out
+                </button>
+              </div>
             </form>
           )}
         </div>
