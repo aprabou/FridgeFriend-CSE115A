@@ -6,7 +6,6 @@ import { supabase } from "../lib/supabaseClient";
 import { createHousehold } from "../lib/householdService";
 import { UserIcon, UsersIcon, BellIcon } from "lucide-react";
 
-
 const Settings: React.FC = () => {
   // Profile hook
   const {
@@ -19,7 +18,6 @@ const Settings: React.FC = () => {
 
   // Local form state
   const [name, setName] = useState("");
-  const [number, setNumber] = useState("");
 
   // Auth
   const { user, signOut } = useAuth();
@@ -51,7 +49,6 @@ const Settings: React.FC = () => {
   // When profile updates, seed name/number
   useEffect(() => {
     if (profile?.name) setName(profile.name);
-    if (profile?.number) setNumber(profile.number);
   }, [profile]);
 
   // When user logs in, load their household name
@@ -95,12 +92,14 @@ const Settings: React.FC = () => {
   const fetchNotificationSettings = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select(`
+      .select(
+        `
         expiry_notifications,
         inventory_updates,
         recipe_recommendations,
         email_notifications
-      `)
+      `
+      )
       .eq("id", user!.id)
       .single();
     if (error) {
@@ -175,10 +174,7 @@ const Settings: React.FC = () => {
     }
 
     // 2️⃣ lookup invitee
-    const {
-      data: invitee,
-      error: inviteeErr,
-    } = await supabase
+    const { data: invitee, error: inviteeErr } = await supabase
       .from("profiles")
       .select("id")
       .eq("email", email)
@@ -196,10 +192,7 @@ const Settings: React.FC = () => {
     }
 
     // 3️⃣ your household
-    const {
-      data: me,
-      error: meErr,
-    } = await supabase
+    const { data: me, error: meErr } = await supabase
       .from("profiles")
       .select("household_id")
       .eq("id", user!.id)
@@ -252,9 +245,7 @@ const Settings: React.FC = () => {
   // ────────────────────────────────────────────────────────────────
 
   // ── Handlers for inputs ───────────────────────────────────────
-  const handleNotificationChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setNotificationSettings((prev) => ({
       ...prev,
@@ -273,182 +264,188 @@ const Settings: React.FC = () => {
 
   const handleLogout = async () => {
     await signOut();
-  };  
+  };
 
   return (
-  <div className="max-w-4xl mx-auto p-6">
-    <header className="mb-6">
-      <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
-      <p className="text-gray-600">Manage your account and preferences</p>
-    </header>
+    <div className="max-w-4xl mx-auto p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
+        <p className="text-gray-600">Manage your account and preferences</p>
+      </header>
 
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="flex border-b border-gray-200">
-        <button
-          className={`px-4 py-3 text-sm font-medium ${
-            activeTab === "profile"
-              ? "border-b-2 border-green-500 text-green-600"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={() => setActiveTab("profile")}
-        >
-          <div className="flex items-center">
-            <UserIcon size={16} className="mr-2" />
-            Profile
-          </div>
-        </button>
-        <button
-          className={`px-4 py-3 text-sm font-medium ${
-            activeTab === "household"
-              ? "border-b-2 border-green-500 text-green-600"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={() => setActiveTab("household")}
-        >
-          <div className="flex items-center">
-            <UsersIcon size={16} className="mr-2" />
-            Household
-          </div>
-        </button>
-        <button
-          className={`px-4 py-3 text-sm font-medium ${
-            activeTab === "notifications"
-              ? "border-b-2 border-green-500 text-green-600"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
-          onClick={() => setActiveTab("notifications")}
-        >
-          <div className="flex items-center">
-            <BellIcon size={16} className="mr-2" />
-            Notifications
-          </div>
-        </button>
-      </div>
-
-      <div className="p-6">
-        {activeTab === "household" && (
-          <div className="space-y-6">
-            {/* Household Name */}
-            <div>
-              <label htmlFor="household-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Household Name
-              </label>
-              <input
-                type="text"
-                id="household-name"
-                value={householdForm.name}
-                onChange={(e) =>
-                  setHouseholdForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <button
-                onClick={handleHouseholdNameUpdate}
-                className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-              >
-                Save Household Name
-              </button>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="flex border-b border-gray-200">
+          <button
+            className={`px-4 py-3 text-sm font-medium ${
+              activeTab === "profile"
+                ? "border-b-2 border-green-500 text-green-600"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+            onClick={() => setActiveTab("profile")}
+          >
+            <div className="flex items-center">
+              <UserIcon size={16} className="mr-2" />
+              Profile
             </div>
+          </button>
+          <button
+            className={`px-4 py-3 text-sm font-medium ${
+              activeTab === "household"
+                ? "border-b-2 border-green-500 text-green-600"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+            onClick={() => setActiveTab("household")}
+          >
+            <div className="flex items-center">
+              <UsersIcon size={16} className="mr-2" />
+              Household
+            </div>
+          </button>
+          <button
+            className={`px-4 py-3 text-sm font-medium ${
+              activeTab === "notifications"
+                ? "border-b-2 border-green-500 text-green-600"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+            onClick={() => setActiveTab("notifications")}
+          >
+            <div className="flex items-center">
+              <BellIcon size={16} className="mr-2" />
+              Notifications
+            </div>
+          </button>
+        </div>
 
-            {/* Invite by Email */}
-            <form onSubmit={handleSendInvite}>
-              <label htmlFor="invite-email" className="block text-sm font-medium text-gray-700 mb-1">
-                Invite by Email
-              </label>
-              <div className="flex gap-2">
+        <div className="p-6">
+          {activeTab === "household" && (
+            <div className="space-y-6">
+              {/* Household Name */}
+              <div>
+                <label
+                  htmlFor="household-name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Household Name
+                </label>
                 <input
-                  type="email"
-                  id="invite-email"
-                  value={householdForm.inviteEmail}
+                  type="text"
+                  id="household-name"
+                  value={householdForm.name}
                   onChange={(e) =>
-                    setHouseholdForm((prev) => ({ ...prev, inviteEmail: e.target.value }))
+                    setHouseholdForm((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
                   }
-                  placeholder="Enter email"
-                  required
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600"
+                  onClick={handleHouseholdNameUpdate}
+                  className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
                 >
-                  Send Invite
+                  Save Household Name
                 </button>
               </div>
-            </form>
-          </div>
-        )}
 
-        {activeTab === "notifications" && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Notification Preferences</h3>
-            {Object.entries(notificationSettings).map(([key, value]) => (
-              <div key={key} className="flex items-center space-x-2">
-                <input
-                  id={key}
-                  name={key}
-                  type="checkbox"
-                  checked={value}
-                  onChange={handleNotificationChange}
-                  className="h-4 w-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
-                />
-                <label htmlFor={key} className="text-sm text-gray-700">
-                  {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+              {/* Invite by Email */}
+              <form onSubmit={handleSendInvite}>
+                <label
+                  htmlFor="invite-email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Invite by Email
                 </label>
-              </div>
-            ))}
-            <button
-              onClick={handleSaveNotificationSettings}
-              className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-            >
-              Save Preferences
-            </button>
-          </div>
-        )}
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    id="invite-email"
+                    value={householdForm.inviteEmail}
+                    onChange={(e) =>
+                      setHouseholdForm((prev) => ({
+                        ...prev,
+                        inviteEmail: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter email"
+                    required
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600"
+                  >
+                    Send Invite
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
-        {activeTab === "profile" && (
-          <form onSubmit={handleProfileSubmit} className="space-y-6">
-            {typeof profileError === "string" && (
-              <div className="text-red-500 text-sm">{profileError}</div>
-            )}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={profileLoading}
-                className="mt-1 block w-full border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              />
+          {activeTab === "notifications" && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium text-gray-800 mb-4">
+                Notification Preferences
+              </h3>
+              {Object.entries(notificationSettings).map(([key, value]) => (
+                <div key={key} className="flex items-center space-x-2">
+                  <input
+                    id={key}
+                    name={key}
+                    type="checkbox"
+                    checked={value}
+                    onChange={handleNotificationChange}
+                    className="h-4 w-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor={key} className="text-sm text-gray-700">
+                    {key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (str) => str.toUpperCase())}
+                  </label>
+                </div>
+              ))}
+              <button
+                onClick={handleSaveNotificationSettings}
+                className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+              >
+                Save Preferences
+              </button>
             </div>
-            <div>
-              <label htmlFor="number" className="block text-sm font-medium text-gray-700">
-                Number
-              </label>
-              <input
-                type="text"
-                id="number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
+          )}
+
+          {activeTab === "profile" && (
+            <form onSubmit={handleProfileSubmit} className="space-y-6">
+              {typeof profileError === "string" && (
+                <div className="text-red-500 text-sm">{profileError}</div>
+              )}
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={profileLoading}
+                  className="mt-1 block w-full border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <button
+                type="submit"
                 disabled={profileLoading}
-                className="mt-1 block w-full border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={profileLoading}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
-            >
-              {profileLoading ? "Saving..." : "Save Changes"}
-            </button>
-          </form>
-        )}
+                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+              >
+                {profileLoading ? "Saving..." : "Save Changes"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>
   );
-};  
+};
 
 export default Settings;
