@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/contexts/InventoryContext.tsx
 
-import React, { createContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from './useAuth';
-import { useContext } from 'react';
+import React, { createContext, useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "./useAuth";
+import { useContext } from "react";
+import { useNotification } from "./NotificationContext";
 
 export interface FoodItem {
   id: string;
@@ -25,7 +27,7 @@ interface InventoryContextType {
   loading: boolean;
   error: string | null;
   addItem: (
-    item: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+    item: Omit<FoodItem, "id" | "user_id" | "household_id" | "created_at">
   ) => Promise<void>;
   updateItem: (id: string, updates: Partial<FoodItem>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
@@ -46,10 +48,19 @@ export const InventoryContext = createContext<InventoryContextType>({
   refetchItems: async () => {},
 });
 
+export const useInventory = () => {
+  const context = useContext(InventoryContext);
+  if (!context) {
+    throw new Error("useInventory must be used within an InventoryProvider");
+  }
+  return context;
+};
+
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
+  const { addNotification } = useNotification();
   const [items, setItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +71,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       // 1) fetch all accepted household IDs for this user
       const { data: memberships, error: memErr } = await supabase
-        .from('household_members')
-        .select('household_id')
-        .eq('user_id', user?.id)
-        .eq('status', 'accepted');
+        .from("household_members")
+        .select("household_id")
+        .eq("user_id", user?.id)
+        .eq("status", "accepted");
       if (memErr) throw memErr;
 
       if (!memberships || memberships.length === 0) {
@@ -75,15 +86,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // 2) fetch items for any of those households
       const { data: fetchedItems, error: fetchError } = await supabase
-        .from('fridge_items')
-        .select('*')
-        .in('household_id', householdIds)
-        .order('expiration', { ascending: true });
+        .from("fridge_items")
+        .select("*")
+        .in("household_id", householdIds)
+        .order("expiration", { ascending: true });
       if (fetchError) throw fetchError;
 
       setItems(fetchedItems ?? []);
     } catch (err: any) {
-      console.error('Error fetching inventory:', err);
+      console.error("Error fetching inventory:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -98,21 +109,21 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     // subscribe to changes on all accepted households
     (async () => {
       const { data: memberships } = await supabase
-        .from('household_members')
-        .select('household_id')
-        .eq('user_id', user.id)
-        .eq('status', 'accepted');
+        .from("household_members")
+        .select("household_id")
+        .eq("user_id", user.id)
+        .eq("status", "accepted");
       if (!memberships) return;
 
       const channels = memberships.map(({ household_id }) =>
         supabase
           .channel(`fridge_sync_${household_id}`)
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'fridge_items',
+              event: "*",
+              schema: "public",
+              table: "fridge_items",
               filter: `household_id=eq.${household_id}`,
             },
             fetchItems
@@ -128,29 +139,29 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user?.id]);
 
   const addItem = async (
-    item: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
+    item: Omit<FoodItem, "id" | "user_id" | "household_id" | "created_at">
   ) => {
     setError(null);
     try {
       // fetch all accepted household memberships
       const { data: memberships, error: memErr } = await supabase
-        .from('household_members')
-        .select('household_id, role')
-        .eq('user_id', user!.id)
-        .eq('status', 'accepted');
+        .from("household_members")
+        .select("household_id, role")
+        .eq("user_id", user!.id)
+        .eq("status", "accepted");
       if (memErr) throw memErr;
       if (!memberships || memberships.length === 0) {
-        throw new Error('User is not in an accepted household.');
+        throw new Error("User is not in an accepted household.");
       }
 
       // pick the owner household if present, otherwise the first
       const householdId =
-        memberships.find((m) => m.role === 'owner')?.household_id ||
+        memberships.find((m) => m.role === "owner")?.household_id ||
         memberships[0].household_id;
 
       // insert the new item
       const { data: newItem, error: insertError } = await supabase
-        .from('fridge_items')
+        .from("fridge_items")
         .insert([
           {
             ...item,
@@ -163,9 +174,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
         .single();
       if (insertError) throw insertError;
 
+      // Update the state with the new item
       setItems((prev) => [...prev, newItem]);
+
+      // Add a notification for the new item
+      addNotification({
+        title: "Item Added",
+        message: `The item "${item.name}" has been added to your inventory.`,
+        type: "info",
+      });
     } catch (err: any) {
-      console.error('Error adding item:', err);
+      console.error("Error adding item:", err);
       setError(err.message);
     }
   };
@@ -174,13 +193,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
     try {
       const { error: updateError } = await supabase
-        .from('fridge_items')
+        .from("fridge_items")
         .update(updates)
-        .eq('id', id);
+        .eq("id", id);
       if (updateError) throw updateError;
       await fetchItems();
     } catch (err: any) {
-      console.error('Error updating item:', err);
+      console.error("Error updating item:", err);
       setError(err.message);
     }
   };
@@ -189,13 +208,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     setError(null);
     try {
       const { error: deleteError } = await supabase
-        .from('fridge_items')
+        .from("fridge_items")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
       if (deleteError) throw deleteError;
       setItems((prev) => prev.filter((it) => it.id !== id));
     } catch (err: any) {
-      console.error('Error deleting item:', err);
+      console.error("Error deleting item:", err);
       setError(err.message);
     }
   };
@@ -233,12 +252,4 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </InventoryContext.Provider>
   );
-};
-
-export const useInventory = () => {
-  const context = useContext(InventoryContext);
-  if (!context) {
-    throw new Error('useInventory must be used within an InventoryProvider');
-  }
-  return context;
 };

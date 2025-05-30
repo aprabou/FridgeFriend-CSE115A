@@ -1,4 +1,5 @@
 // src/contexts/ProfileContext.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "../lib/supabaseClient";
@@ -24,7 +25,9 @@ interface ProfileContextType {
   setProfile: (profile: Profile | null) => void;
 }
 
-export const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
+export const ProfileContext = createContext<ProfileContextType | undefined>(
+  undefined
+);
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -39,7 +42,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error: fetchErr } = await supabase
         .from("profiles")
-        .select(`
+        .select(
+          `
           id,
           name,
           number,
@@ -48,7 +52,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           inventory_updates,
           recipe_recommendations,
           email_notifications
-        `)
+        `
+        )
         .eq("id", user.id)
         .single();
 

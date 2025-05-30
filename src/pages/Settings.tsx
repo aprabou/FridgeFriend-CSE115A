@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/useAuth";
 import { useProfile } from "../contexts/useProfile";
@@ -326,10 +328,6 @@ const Settings: React.FC = () => {
       ...prev,
       [name as NotifKeys]: checked,
     }));
-  };
-
-  const handleInviteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHouseholdForm((prev) => ({ ...prev, inviteEmail: e.target.value }));
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {

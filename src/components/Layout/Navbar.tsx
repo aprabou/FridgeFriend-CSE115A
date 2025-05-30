@@ -12,7 +12,7 @@ export interface NavbarProps {
   children?: React.ReactNode;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onNotificationClick }) => {
+const Navbar: React.FC<NavbarProps> = () => {
   const { signOut } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();

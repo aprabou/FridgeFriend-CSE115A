@@ -1,4 +1,10 @@
-import React, { createContext, useState, useEffect, useContext, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  PropsWithChildren,
+} from "react";
 import { supabase } from "../lib/supabaseClient"; // Adjust the import path for your Supabase client
 import { useAuth } from "./useAuth"; // ✅ updated import
 
@@ -26,7 +32,9 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined
 );
 
-export const NotificationProvider: React.FC<PropsWithChildren> = ({ children }) => {
+export const NotificationProvider: React.FC<PropsWithChildren> = ({
+  children,
+}) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);

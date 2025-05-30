@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/useAuth'; // ✅ updated path
-import { ShoppingBagIcon } from 'lucide-react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth"; // ✅ updated path
+import { ShoppingBagIcon } from "lucide-react";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -15,19 +17,19 @@ const Login: React.FC = () => {
     e.preventDefault();
 
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
-    setError('');
+    setError("");
     setLoading(true);
     try {
       // signIn throws on error, so no destructuring needed
       await signIn(email, password);
-      navigate('/');
+      navigate("/");
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err?.message || 'Failed to sign in');
+      console.error("Login error:", err);
+      setError(err?.message || "Failed to sign in");
     } finally {
       setLoading(false);
     }
@@ -47,8 +49,11 @@ const Login: React.FC = () => {
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/register" className="font-medium text-green-600 hover:text-green-500">
+          Or{" "}
+          <Link
+            to="/register"
+            className="font-medium text-green-600 hover:text-green-500"
+          >
             create a new account
           </Link>
         </p>
@@ -64,7 +69,10 @@ const Login: React.FC = () => {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <div className="mt-1">
@@ -82,7 +90,10 @@ const Login: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1">
@@ -107,13 +118,19 @@ const Login: React.FC = () => {
                   type="checkbox"
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember_me" className="ml-2 block text-sm text-gray-900">
+                <label
+                  htmlFor="remember_me"
+                  className="ml-2 block text-sm text-gray-900"
+                >
                   Remember me
                 </label>
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-green-600 hover:text-green-500">
+                <a
+                  href="#"
+                  className="font-medium text-green-600 hover:text-green-500"
+                >
                   Forgot your password?
                 </a>
               </div>
@@ -125,7 +142,7 @@ const Login: React.FC = () => {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? "Signing in..." : "Sign in"}
               </button>
             </div>
           </form>
@@ -144,8 +161,8 @@ const Login: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('demo@example.com');
-                  setPassword('password123');
+                  setEmail("demo@example.com");
+                  setPassword("password123");
                 }}
                 className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >

@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 //import { useAuth } from "../contexts/AuthContext";
-import { useAuth } from "../contexts/useAuth"
+import { useAuth } from "../contexts/useAuth";
 import { ShoppingBagIcon } from "lucide-react";
 
 const Register: React.FC = () => {

@@ -62,11 +62,11 @@ const App: React.FC = () => (
   <BrowserRouter>
     <AuthProvider>
       <ProfileProvider>
-        <InventoryProvider>
-          <NotificationProvider>
+        <NotificationProvider>
+          <InventoryProvider>
             <AppRoutes />
-          </NotificationProvider>
-        </InventoryProvider>
+          </InventoryProvider>
+        </NotificationProvider>
       </ProfileProvider>
     </AuthProvider>
   </BrowserRouter>

@@ -1,13 +1,14 @@
 // src/pages/Invitations.tsx
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../contexts/useAuth';
-import { useNavigate } from 'react-router-dom';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../contexts/useAuth";
+import { useNavigate } from "react-router-dom";
 
 // Shape of an invite row, including the joined household name
 type Invite = {
   household_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   households: { name: string };
 };
 
@@ -20,7 +21,7 @@ const Invitations: React.FC = () => {
   useEffect(() => {
     async function loadInvites() {
       const { data, error } = await supabase
-        .from('household_members')
+        .from("household_members")
         .select(
           `
             household_id,
@@ -28,11 +29,11 @@ const Invitations: React.FC = () => {
             households(name)
           `
         )
-        .eq('user_id', user!.id)
-        .eq('status', 'pending');
+        .eq("user_id", user!.id)
+        .eq("status", "pending");
 
       if (error) {
-        console.error('Error fetching invites:', error);
+        console.error("Error fetching invites:", error);
         return;
       }
 
@@ -44,7 +45,7 @@ const Invitations: React.FC = () => {
           return {
             household_id: row.household_id,
             status: row.status,
-            households: { name: houseObj?.name ?? '' },
+            households: { name: houseObj?.name ?? "" },
           };
         });
         setInvites(normalized);
@@ -57,26 +58,26 @@ const Invitations: React.FC = () => {
   // Accept an invitation
   const acceptInvite = async (householdId: string) => {
     const { error: updateErr } = await supabase
-      .from('household_members')
-      .update({ status: 'accepted' })
-      .eq('user_id', user!.id)
-      .eq('household_id', householdId);
+      .from("household_members")
+      .update({ status: "accepted" })
+      .eq("user_id", user!.id)
+      .eq("household_id", householdId);
 
     if (updateErr) {
-      console.error('Error accepting invite:', updateErr);
-      return alert('Failed to accept invite.');
+      console.error("Error accepting invite:", updateErr);
+      return alert("Failed to accept invite.");
     }
 
     const { error: profileErr } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({ household_id: householdId })
-      .eq('id', user!.id);
+      .eq("id", user!.id);
 
-    if (profileErr) console.error('Error linking profile:', profileErr);
+    if (profileErr) console.error("Error linking profile:", profileErr);
 
-    setInvites(prev => prev.filter(i => i.household_id !== householdId));
-    alert('Invite accepted!');
-    navigate('/inventory');
+    setInvites((prev) => prev.filter((i) => i.household_id !== householdId));
+    alert("Invite accepted!");
+    navigate("/inventory");
   };
 
   return (
@@ -86,7 +87,7 @@ const Invitations: React.FC = () => {
         <p className="text-gray-700">You have no pending invitations.</p>
       ) : (
         <ul className="space-y-3">
-          {invites.map(inv => (
+          {invites.map((inv) => (
             <li
               key={inv.household_id}
               className="flex items-center justify-between p-4 bg-white rounded shadow"
