@@ -1,9 +1,10 @@
 // src/components/Layout/Navbar.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { BellIcon, UserCircleIcon, MenuIcon } from 'lucide-react';
-import { useAuth } from '../../contexts/useAuth';
-import { useProfile } from '../../contexts/useProfile';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { BellIcon, UserCircleIcon, MenuIcon } from "lucide-react";
+import { useAuth } from "../../contexts/useAuth";
+import { useProfile } from "../../contexts/useProfile";
+import { useNotification } from "../../contexts/NotificationContext";
 
 export interface NavbarProps {
   unreadCount: number;
@@ -11,30 +12,40 @@ export interface NavbarProps {
   children?: React.ReactNode;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => {
-  const { user, signOut } = useAuth();
+const Navbar: React.FC<NavbarProps> = ({ onNotificationClick }) => {
+  const { signOut } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const { notifications, unreadCount } = useNotification();
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
+    navigate("/login");
   };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (showUserMenu && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        showUserMenu &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         setShowUserMenu(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showUserMenu]);
+
+  const toggleNotificationTab = () => {
+    setIsNotificationOpen((prev) => !prev);
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -43,15 +54,21 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => 
         <div className="flex items-center">
           <button
             className="lg:hidden text-gray-500 hover:text-gray-700 mr-4"
-            onClick={() => setShowMobileMenu(prev => !prev)}
+            onClick={() => setShowMobileMenu((prev) => !prev)}
           >
             <MenuIcon size={24} />
           </button>
           <div className="flex items-center">
-            <Link to="/inventory" className="text-green-500 text-xl font-semibold mr-1">
+            <Link
+              to="/inventory"
+              className="text-green-500 text-xl font-semibold mr-1"
+            >
               Fridge
             </Link>
-            <Link to="/inventory" className="text-blue-500 text-xl font-semibold">
+            <Link
+              to="/inventory"
+              className="text-blue-500 text-xl font-semibold"
+            >
               Friend
             </Link>
           </div>
@@ -59,32 +76,56 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => 
 
         {/* Desktop Nav Links */}
         <div className="hidden lg:flex items-center space-x-4">
-          <Link to="/inventory" className="px-3 py-2">My Fridge</Link>
-          <Link to="/recipes" className="px-3 py-2">Recipes</Link>
-          <Link to="/settings" className="px-3 py-2">Settings</Link>
-          <Link to="/invitations" className="px-3 py-2">Invitations</Link>
+          <Link to="/inventory" className="px-3 py-2">
+            My Fridge
+          </Link>
+          <Link to="/recipes" className="px-3 py-2">
+            Recipes
+          </Link>
+          <Link to="/settings" className="px-3 py-2">
+            Settings
+          </Link>
+          <Link to="/invitations" className="px-3 py-2">
+            Invitations
+          </Link>
         </div>
 
         {/* Notification & User Menu */}
         <div className="flex items-center space-x-4">
+          {/* Notification Button */}
           <button
             className="relative p-1 text-gray-500 hover:text-gray-700 rounded-full"
-            onClick={onNotificationClick}
+            onClick={toggleNotificationTab}
           >
             <BellIcon size={24} />
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
 
+          {/* Notification Pop-Up Tab */}
+          {isNotificationOpen && (
+            <div className="absolute right-0 top-12 w-80 bg-white shadow-lg rounded-lg p-4 z-50">
+              <h3 className="text-lg font-bold mb-2">Notifications</h3>
+              <ul>
+                {notifications.map((notification) => (
+                  <li key={notification.id}>{notification.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="relative" ref={menuRef}>
             <button
               className="flex items-center focus:outline-none"
-              onClick={() => setShowUserMenu(prev => !prev)}
+              onClick={() => setShowUserMenu((prev) => !prev)}
             >
-              <UserCircleIcon size={28} className="text-gray-500 hover:text-gray-700" />
+              <UserCircleIcon
+                size={28}
+                className="text-gray-500 hover:text-gray-700"
+              />
               <span className="hidden md:block ml-2 text-sm text-gray-700">
                 {profile?.name}
               </span>
@@ -108,7 +149,10 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => 
                 </Link>
                 <button
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
                 >
                   Sign out
                 </button>
@@ -121,10 +165,18 @@ const Navbar: React.FC<NavbarProps> = ({ unreadCount, onNotificationClick }) => 
       {/* Mobile Nav Links Toggle */}
       {showMobileMenu && (
         <nav className="lg:hidden px-4 pt-2 pb-4 space-y-1">
-          <Link to="/inventory" className="block px-3 py-2">My Fridge</Link>
-          <Link to="/recipes" className="block px-3 py-2">Recipes</Link>
-          <Link to="/settings" className="block px-3 py-2">Settings</Link>
-          <Link to="/invitations" className="block px-3 py-2">Invitations</Link>
+          <Link to="/inventory" className="block px-3 py-2">
+            My Fridge
+          </Link>
+          <Link to="/recipes" className="block px-3 py-2">
+            Recipes
+          </Link>
+          <Link to="/settings" className="block px-3 py-2">
+            Settings
+          </Link>
+          <Link to="/invitations" className="block px-3 py-2">
+            Invitations
+          </Link>
         </nav>
       )}
     </header>
