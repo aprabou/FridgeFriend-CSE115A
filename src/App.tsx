@@ -13,6 +13,7 @@ import Recipes from "./pages/Recipes"; // ✅ Import Recipes
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import "./globals.css"
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();

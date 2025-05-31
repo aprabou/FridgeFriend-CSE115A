@@ -1,13 +1,15 @@
-// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(), // ✅ no fastRefresh option
-  ],
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'), // ensure trailing ./ for clarity
+    },
+  },
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    include: ['lucide-react'], // include it instead of exclude if you're using tree-shaking or dynamic imports
   },
 });

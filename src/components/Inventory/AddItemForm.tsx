@@ -1,42 +1,47 @@
-import React, { useState } from 'react';
-import { XIcon, CameraIcon } from 'lucide-react';
-import { FoodItem } from '../../contexts/InventoryContext';
+"use client"
+
+import type React from "react"
+import { useState } from "react"
+import { XIcon } from "lucide-react"
+import type { FoodItem } from "../../contexts/InventoryContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 
 interface AddItemFormProps {
   /** existing item when editing */
-  item?: FoodItem | null;
+  item?: FoodItem | null
   /** called with new/updated payload */
-  onSubmit: (
-    data: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'>
-  ) => Promise<void>;
-  onClose: () => void;
+  onSubmit: (data: Omit<FoodItem, "id" | "user_id" | "household_id" | "created_at">) => Promise<void>
+  onClose: () => void
 }
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClose }) => {
-  const [showScanner, setShowScanner] = useState(false);
+  const [showScanner, setShowScanner] = useState(false)
   const [formData, setFormData] = useState(() => ({
-    name: item?.name || '',
+    name: item?.name || "",
     quantity: item?.quantity || 1,
-    unit: item?.unit || 'piece',
-    category: item?.category || 'dairy',
-    purchaseDate:
-      (item?.purchased && item.purchased.split('T')[0]) ||
-      new Date().toISOString().split('T')[0],
-    expirationDate: (item?.expiration && item.expiration.split('T')[0]) || '',
-    storageLocation: item?.location || 'refrigerator',
-  }));
+    unit: item?.unit || "piece",
+    category: item?.category || "dairy",
+    purchaseDate: (item?.purchased && item.purchased.split("T")[0]) || new Date().toISOString().split("T")[0],
+    expirationDate: (item?.expiration && item.expiration.split("T")[0]) || "",
+    storageLocation: item?.location || "refrigerator",
+  }))
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    const payload: Omit<FoodItem, 'id' | 'user_id' | 'household_id' | 'created_at'> = {
+    const payload: Omit<FoodItem, "id" | "user_id" | "household_id" | "created_at"> = {
       name: formData.name,
       quantity: formData.quantity,
       unit: formData.unit,
@@ -44,206 +49,187 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClos
       purchased: formData.purchaseDate,
       expiration: formData.expirationDate,
       location: formData.storageLocation,
-    };
+    }
 
     try {
-      console.log('AddItemForm.handleSubmit', payload);
-      await onSubmit(payload);
-      onClose();
+      console.log("AddItemForm.handleSubmit", payload)
+      await onSubmit(payload)
+      onClose()
     } catch (err) {
-      console.error('❌ Error submitting item:', err);
-      alert('Failed to save item. Please try again.');
+      console.error("❌ Error submitting item:", err)
+      alert("Failed to save item. Please try again.")
     }
-  };
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-md w-full">
-      <div className="flex items-center justify-between bg-green-500 text-white px-4 py-3">
-        <h2 className="text-lg font-semibold">
-          {item ? 'Edit Item' : 'Add New Item'}
-        </h2>
-        <button onClick={onClose} className="text-white hover:text-gray-200">
-          <XIcon size={20} />
-        </button>
-      </div>
-
-      {showScanner ? (
-        <div className="p-6">
-          <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">Receipt Scanner Simulation</p>
-          </div>
-          <div className="flex justify-between mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg"
-              onClick={() => setShowScanner(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-white bg-blue-500 rounded-lg"
-              onClick={() => {
-                setFormData({
-                  ...formData,
-                  name: 'Milk',
-                  quantity: 1,
-                  unit: 'gallon',
-                  category: 'dairy',
-                  expirationDate: new Date(
-                    Date.now() + 7 * 86400000
-                  )
-                    .toISOString()
-                    .split('T')[0],
-                });
-                setShowScanner(false);
-              }}
-            >
-              Use Scanned Data
-            </button>
-          </div>
+    <Card className="max-w-md w-full">
+      <CardHeader className="bg-primary text-primary-foreground">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold">{item ? "Edit Item" : "Add New Item"}</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-primary-foreground hover:bg-primary-foreground/20"
+          >
+            <XIcon className="w-5 h-5" />
+          </Button>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Item Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm text-gray-700 mb-1">
-              Item Name*
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              placeholder="e.g., Milk"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
+      </CardHeader>
 
-          {/* Quantity & Unit */}
+      <CardContent className="p-6">
+        {showScanner ? (
           <div>
-            <label className="block text-sm text-gray-700 mb-1">
-              Quantity & Unit*
-            </label>
-            <div className="flex space-x-2">
-              <input
-                type="number"
-                name="quantity"
-                min="0.1"
-                step="0.1"
-                value={formData.quantity}
-                onChange={handleChange}
-                required
-                className="w-1/2 px-3 py-2 border rounded"
-              />
-              <select
-                name="unit"
-                value={formData.unit}
-                onChange={handleChange}
-                required
-                className="w-1/2 px-3 py-2 border rounded"
+            <div className="bg-muted h-64 rounded-lg flex items-center justify-center mb-4">
+              <p className="text-muted-foreground">Receipt Scanner Simulation</p>
+            </div>
+            <div className="flex justify-between gap-2">
+              <Button variant="outline" onClick={() => setShowScanner(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    name: "Milk",
+                    quantity: 1,
+                    unit: "gallon",
+                    category: "dairy",
+                    expirationDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
+                  })
+                  setShowScanner(false)
+                }}
               >
-                <option value="piece">Piece</option>
-                <option value="gallon">Gallon</option>
-                <option value="oz">Ounce</option>
-                <option value="lb">Pound</option>
-              </select>
+                Use Scanned Data
+              </Button>
             </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Item Name */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium mb-2">
+                Item Name*
+              </label>
+              <Input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="e.g., Milk"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          {/* Purchase Date */}
-          <div>
-            <label htmlFor="purchaseDate" className="block text-sm text-gray-700 mb-1">
-              Purchase Date*
-            </label>
-            <input
-              type="date"
-              id="purchaseDate"
-              name="purchaseDate"
-              value={formData.purchaseDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
+            {/* Quantity & Unit */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Quantity & Unit*</label>
+              <div className="flex space-x-2">
+                <Input
+                  type="number"
+                  name="quantity"
+                  min="0.1"
+                  step="0.1"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  required
+                  className="flex-1"
+                />
+                <Select value={formData.unit} onValueChange={(value) => handleSelectChange("unit", value)}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="piece">Piece</SelectItem>
+                    <SelectItem value="gallon">Gallon</SelectItem>
+                    <SelectItem value="oz">Ounce</SelectItem>
+                    <SelectItem value="lb">Pound</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-          {/* Expiration Date */}
-          <div>
-            <label htmlFor="expirationDate" className="block text-sm text-gray-700 mb-1">
-              Expiration Date*
-            </label>
-            <input
-              type="date"
-              id="expirationDate"
-              name="expirationDate"
-              value={formData.expirationDate}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
+            {/* Purchase Date */}
+            <div>
+              <label htmlFor="purchaseDate" className="block text-sm font-medium mb-2">
+                Purchase Date*
+              </label>
+              <Input
+                type="date"
+                id="purchaseDate"
+                name="purchaseDate"
+                value={formData.purchaseDate}
+                onChange={handleChange}
+              />
+            </div>
 
-          {/* Category */}
-          <div>
-            <label htmlFor="category" className="block text-sm text-gray-700 mb-1">
-              Category*
-            </label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            >
-              <option value="fruits">Fruits</option>
-              <option value="vegetables">Vegetables</option>
-              <option value="dairy">Dairy</option>
-              <option value="meat">Meat</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+            {/* Expiration Date */}
+            <div>
+              <label htmlFor="expirationDate" className="block text-sm font-medium mb-2">
+                Expiration Date*
+              </label>
+              <Input
+                type="date"
+                id="expirationDate"
+                name="expirationDate"
+                value={formData.expirationDate}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          {/* Storage Location */}
-          <div>
-            <label htmlFor="storageLocation" className="block text-sm text-gray-700 mb-1">
-              Storage Location*
-            </label>
-            <select
-              id="storageLocation"
-              name="storageLocation"
-              value={formData.storageLocation}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            >
-              <option value="refrigerator">Refrigerator</option>
-              <option value="freezer">Freezer</option>
-              <option value="pantry">Pantry</option>
-            </select>
-          </div>
+            {/* Category */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium mb-2">
+                Category*
+              </label>
+              <Select value={formData.category} onValueChange={(value) => handleSelectChange("category", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fruits">Fruits</SelectItem>
+                  <SelectItem value="vegetables">Vegetables</SelectItem>
+                  <SelectItem value="dairy">Dairy</SelectItem>
+                  <SelectItem value="meat">Meat</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded"
-            >
-              {item ? 'Save Changes' : 'Add Item'}
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
-  );
-};
+            {/* Storage Location */}
+            <div>
+              <label htmlFor="storageLocation" className="block text-sm font-medium mb-2">
+                Storage Location*
+              </label>
+              <Select
+                value={formData.storageLocation}
+                onValueChange={(value) => handleSelectChange("storageLocation", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="refrigerator">Refrigerator</SelectItem>
+                  <SelectItem value="freezer">Freezer</SelectItem>
+                  <SelectItem value="pantry">Pantry</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-export default AddItemForm;
+            {/* Actions */}
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit">{item ? "Save Changes" : "Add Item"}</Button>
+            </div>
+          </form>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+export default AddItemForm

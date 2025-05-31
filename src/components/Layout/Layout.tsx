@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import NotificationCenter from '../Notifications/NotificationCenter';
 //import { useNotifications } from '../../contexts/NotificationContext';
 import { useNotifications } from '../../contexts/useNotifications'; // ✅ correct
+import "./globals.css"
 
 
 const Layout: React.FC = () => {
@@ -12,7 +13,7 @@ const Layout: React.FC = () => {
   const [showNotifications, setShowNotifications] = React.useState(false);
   
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark">
       <Sidebar />
       
       <div className="flex flex-col flex-1 overflow-hidden">
