@@ -189,20 +189,35 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateItem = async (id: string, updates: Partial<FoodItem>) => {
-    setError(null);
-    try {
-      const { error: updateError } = await supabase
-        .from("fridge_items")
-        .update(updates)
-        .eq("id", id);
-      if (updateError) throw updateError;
-      await fetchItems();
-    } catch (err: any) {
-      console.error("Error updating item:", err);
-      setError(err.message);
+ const updateItem = async (id: string, updates: Partial<FoodItem>) => {
+  setError(null);
+
+  if (!id) {
+    console.error("❌ Missing item ID for update");
+    return;
+  }
+
+  console.log("🔄 Calling updateItem:", id, updates);
+
+  try {
+    const { error } = await supabase
+      .from("fridge_items")
+      .update(updates)
+      .eq("id", id);
+
+    if (error) {
+      console.error("❌ Supabase update error:", error);
+      throw error;
     }
-  };
+
+    console.log("✅ Item updated successfully");
+    await fetchItems(); // Refresh state
+  } catch (err: any) {
+    console.error("Error updating item:", err);
+    setError(err.message);
+  }
+};
+
 
   const deleteItem = async (id: string) => {
     setError(null);
