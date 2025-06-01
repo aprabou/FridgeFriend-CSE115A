@@ -108,45 +108,65 @@ const Inventory: React.FC = () => {
     count: number
     icon: any
     color: string
-  }) => (
-    <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg ${color}`}>
-      <Icon className="w-5 h-5" />
-      <h3 className="font-semibold text-lg">{title}</h3>
-      <Badge variant="secondary" className="ml-auto">
-        {count}
-      </Badge>
-    </div>
-  )
+  }) => {
+    // Map color names to solid background colors
+    const colorMap: Record<string, string> = {
+      red: "bg-red-600",
+      orange: "bg-orange-600",
+      amber: "bg-amber-600",
+      blue: "bg-blue-600",
+      emerald: "bg-emerald-600",
+    }
+
+    const bgColorClass = colorMap[color] || colorMap["emerald"]
+
+    return (
+      <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg ${bgColorClass} shadow-md`}>
+        <Icon className="w-4 h-4 text-white" />
+        <h3 className="font-semibold text-base text-white">{title}</h3>
+        <Badge variant="secondary" className="ml-auto bg-white/20 text-white hover:bg-white/30 border-0">
+          {count}
+        </Badge>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading inventory...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading inventory...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors">
+    <div className="min-h-screen bg-gray-900 text-gray-100 transition-colors">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Inventory</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl font-bold mb-2 text-gray-100">Inventory</h1>
+            <p className="text-gray-400">
               {filteredItems.length} {filteredItems.length === 1 ? "item" : "items"} in your inventory
             </p>
           </div>
 
           <div className="flex gap-3 mt-4 sm:mt-0">
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700 hover:border-emerald-500 hover:text-emerald-400 transition-colors"
+            >
               <FilterIcon className="w-4 h-4 mr-2" />
               Filter
             </Button>
-            <Button onClick={() => setShowAddForm(true)}>
+            <Button
+              onClick={() => setShowAddForm(true)}
+              className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white transition-colors"
+            >
               <PlusIcon className="w-4 h-4 mr-2" />
               Add Item
             </Button>
@@ -155,11 +175,15 @@ const Inventory: React.FC = () => {
 
         {/* Filters */}
         {showFilters && (
-          <Card className="mb-8">
+          <Card className="mb-8 bg-gray-800 border-gray-700">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Filters</CardTitle>
-                <Button variant="ghost" onClick={resetFilters}>
+                <CardTitle className="text-gray-100">Filters</CardTitle>
+                <Button
+                  variant="ghost"
+                  onClick={resetFilters}
+                  className="text-gray-400 hover:text-emerald-400 hover:bg-gray-700 transition-colors"
+                >
                   Reset
                 </Button>
               </div>
@@ -167,31 +191,40 @@ const Inventory: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Search</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Search</label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search by name..."
                       value={filters.search}
                       onChange={(e) => handleFilterChange("search", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-emerald-500 hover:border-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Storage Location</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Storage Location</label>
                   <Select
                     value={filters.location}
                     onValueChange={(value) => handleFilterChange("location", value === "all" ? "" : value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 hover:border-emerald-500 transition-colors">
                       <SelectValue placeholder="All Locations" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Locations</SelectItem>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectItem
+                        value="all"
+                        className="text-gray-100 hover:text-emerald-400 focus:text-emerald-400 focus:bg-gray-600 cursor-pointer"
+                      >
+                        All Locations
+                      </SelectItem>
                       {locations.map((loc) => (
-                        <SelectItem key={loc} value={loc}>
+                        <SelectItem
+                          key={loc}
+                          value={loc}
+                          className="text-gray-100 hover:text-emerald-400 focus:text-emerald-400 focus:bg-gray-600 cursor-pointer"
+                        >
                           {loc.charAt(0).toUpperCase() + loc.slice(1)}
                         </SelectItem>
                       ))}
@@ -200,18 +233,27 @@ const Inventory: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Category</label>
                   <Select
                     value={filters.category}
                     onValueChange={(value) => handleFilterChange("category", value === "all" ? "" : value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-100 focus:border-emerald-500 focus:ring-emerald-500 hover:border-emerald-500 transition-colors">
                       <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectItem
+                        value="all"
+                        className="text-gray-100 hover:text-emerald-400 focus:text-emerald-400 focus:bg-gray-600 cursor-pointer"
+                      >
+                        All Categories
+                      </SelectItem>
                       {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
+                        <SelectItem
+                          key={cat}
+                          value={cat}
+                          className="text-gray-100 hover:text-emerald-400 focus:text-emerald-400 focus:bg-gray-600 cursor-pointer"
+                        >
                           {cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </SelectItem>
                       ))}
@@ -225,8 +267,9 @@ const Inventory: React.FC = () => {
                       id="expiringSoon"
                       checked={filters.expiringSoon}
                       onCheckedChange={(checked) => handleFilterChange("expiringSoon", checked)}
+                      className="border-gray-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                     />
-                    <label htmlFor="expiringSoon" className="text-sm font-medium">
+                    <label htmlFor="expiringSoon" className="text-sm font-medium text-gray-300 cursor-pointer">
                       Expiring Soon (7 days)
                     </label>
                   </div>
@@ -241,18 +284,13 @@ const Inventory: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Expired Items */}
             <div className="space-y-4">
-              <ColumnHeader
-                title="Expired"
-                count={categorizedItems.expired.length}
-                icon={AlertTriangle}
-                color="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400"
-              />
+              <ColumnHeader title="Expired" count={categorizedItems.expired.length} icon={AlertTriangle} color="red" />
               <div className="space-y-3">
                 {categorizedItems.expired.map((item) => (
                   <FoodItemCard key={item.id} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 ))}
                 {categorizedItems.expired.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-gray-400">
                     <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No expired items</p>
                   </div>
@@ -262,18 +300,13 @@ const Inventory: React.FC = () => {
 
             {/* Expiring Today */}
             <div className="space-y-4">
-              <ColumnHeader
-                title="Today"
-                count={categorizedItems.expiringToday.length}
-                icon={Clock}
-                color="bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400"
-              />
+              <ColumnHeader title="Today" count={categorizedItems.expiringToday.length} icon={Clock} color="orange" />
               <div className="space-y-3">
                 {categorizedItems.expiringToday.map((item) => (
                   <FoodItemCard key={item.id} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 ))}
                 {categorizedItems.expiringToday.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-gray-400">
                     <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Nothing expires today</p>
                   </div>
@@ -287,14 +320,14 @@ const Inventory: React.FC = () => {
                 title="Soon (1-3 days)"
                 count={categorizedItems.expiringSoon.length}
                 icon={Calendar}
-                color="bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400"
+                color="amber"
               />
               <div className="space-y-3">
                 {categorizedItems.expiringSoon.map((item) => (
                   <FoodItemCard key={item.id} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 ))}
                 {categorizedItems.expiringSoon.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-gray-400">
                     <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Nothing expiring soon</p>
                   </div>
@@ -308,14 +341,14 @@ const Inventory: React.FC = () => {
                 title="This Week"
                 count={categorizedItems.expiringThisWeek.length}
                 icon={Package}
-                color="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400"
+                color="blue"
               />
               <div className="space-y-3">
                 {categorizedItems.expiringThisWeek.map((item) => (
                   <FoodItemCard key={item.id} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 ))}
                 {categorizedItems.expiringThisWeek.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-gray-400">
                     <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Nothing this week</p>
                   </div>
@@ -325,18 +358,13 @@ const Inventory: React.FC = () => {
 
             {/* Fresh (8+ days) */}
             <div className="space-y-4">
-              <ColumnHeader
-                title="Fresh"
-                count={categorizedItems.fresh.length}
-                icon={CheckCircle}
-                color="bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400"
-              />
+              <ColumnHeader title="Fresh" count={categorizedItems.fresh.length} icon={CheckCircle} color="emerald" />
               <div className="space-y-3">
                 {categorizedItems.fresh.map((item) => (
                   <FoodItemCard key={item.id} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
                 ))}
                 {categorizedItems.fresh.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-gray-400">
                     <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No fresh items</p>
                   </div>
@@ -345,10 +373,14 @@ const Inventory: React.FC = () => {
             </div>
           </div>
         ) : (
-          <Card className="mt-8">
+          <Card className="mt-8 bg-gray-800 border-gray-700">
             <CardContent className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No items match your current filters.</p>
-              <Button variant="outline" onClick={resetFilters}>
+              <p className="text-gray-400 mb-4">No items match your current filters.</p>
+              <Button
+                variant="outline"
+                onClick={resetFilters}
+                className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600 hover:border-emerald-500 hover:text-emerald-400 transition-colors"
+              >
                 Clear Filters
               </Button>
             </CardContent>
