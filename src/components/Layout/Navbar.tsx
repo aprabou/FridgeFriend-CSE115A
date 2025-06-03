@@ -1,10 +1,9 @@
 // src/components/Layout/Navbar.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BellIcon, UserCircleIcon, MenuIcon } from "lucide-react";
+import { UserCircleIcon, MenuIcon } from "lucide-react";
 import { useAuth } from "../../contexts/useAuth";
 import { useProfile } from "../../contexts/useProfile";
-import { useNotification } from "../../contexts/NotificationContext";
 
 export interface NavbarProps {
   unreadCount: number;
@@ -19,8 +18,6 @@ const Navbar: React.FC<NavbarProps> = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const { notifications, unreadCount } = useNotification();
 
   const handleLogout = async () => {
     await signOut();
@@ -42,10 +39,6 @@ const Navbar: React.FC<NavbarProps> = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showUserMenu]);
-
-  const toggleNotificationTab = () => {
-    setIsNotificationOpen((prev) => !prev);
-  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -90,33 +83,7 @@ const Navbar: React.FC<NavbarProps> = () => {
           </Link>
         </div>
 
-        {/* Notification & User Menu */}
         <div className="flex items-center space-x-4">
-          {/* Notification Button */}
-          <button
-            className="relative p-1 text-gray-500 hover:text-gray-700 rounded-full"
-            onClick={toggleNotificationTab}
-          >
-            <BellIcon size={24} />
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Notification Pop-Up Tab */}
-          {isNotificationOpen && (
-            <div className="absolute right-0 top-12 w-80 bg-white shadow-lg rounded-lg p-4 z-50">
-              <h3 className="text-lg font-bold mb-2">Notifications</h3>
-              <ul>
-                {notifications.map((notification) => (
-                  <li key={notification.id}>{notification.message}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <div className="relative" ref={menuRef}>
             <button
               className="flex items-center focus:outline-none"
