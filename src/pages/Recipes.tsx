@@ -1,132 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../contexts/useInventory'; // ✅ fixed import
+import { useInventory } from '../contexts/useInventory';
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';
 import { SearchIcon, RefreshCwIcon } from 'lucide-react';
-
-
-const mockRecipes: Recipe[] = [
-  {
-    id: '1',
-    title: 'Creamy Garlic Parmesan Chicken',
-    image: 'https://images.pexels.com/photos/6210876/pexels-photo-6210876.jpeg',
-    readyInMinutes: 45,
-    servings: 4,
-    sourceUrl: 'https://example.com/recipe1',
-    usedIngredientCount: 5,
-    missedIngredientCount: 2,
-    usedIngredients: [
-      { name: 'Chicken' },
-      { name: 'Garlic' },
-      { name: 'Parmesan' },
-      { name: 'Cream' },
-      { name: 'Butter' }
-    ],
-    missedIngredients: [
-      { name: 'Fresh Herbs' },
-      { name: 'White Wine' }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Quick Vegetable Stir Fry',
-    image: 'https://images.pexels.com/photos/1410235/pexels-photo-1410235.jpeg',
-    readyInMinutes: 20,
-    servings: 2,
-    sourceUrl: 'https://example.com/recipe2',
-    usedIngredientCount: 4,
-    missedIngredientCount: 1,
-    usedIngredients: [
-      { name: 'Broccoli' },
-      { name: 'Carrots' },
-      { name: 'Bell Peppers' },
-      { name: 'Soy Sauce' }
-    ],
-    missedIngredients: [
-      { name: 'Sesame Oil' }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Classic Spaghetti Bolognese',
-    image: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg',
-    readyInMinutes: 60,
-    servings: 6,
-    sourceUrl: 'https://example.com/recipe3',
-    usedIngredientCount: 6,
-    missedIngredientCount: 3,
-    usedIngredients: [
-      { name: 'Ground Beef' },
-      { name: 'Onions' },
-      { name: 'Garlic' },
-      { name: 'Tomatoes' },
-      { name: 'Pasta' },
-      { name: 'Olive Oil' }
-    ],
-    missedIngredients: [
-      { name: 'Bay Leaves' },
-      { name: 'Red Wine' },
-      { name: 'Fresh Basil' }
-    ]
-  },
-  {
-    id: '4',
-    title: 'Simple Greek Salad',
-    image: 'https://images.pexels.com/photos/1213710/pexels-photo-1213710.jpeg',
-    readyInMinutes: 15,
-    servings: 2,
-    sourceUrl: 'https://example.com/recipe4',
-    usedIngredientCount: 5,
-    missedIngredientCount: 1,
-    usedIngredients: [
-      { name: 'Cucumber' },
-      { name: 'Tomatoes' },
-      { name: 'Red Onion' },
-      { name: 'Feta Cheese' },
-      { name: 'Olive Oil' }
-    ],
-    missedIngredients: [
-      { name: 'Kalamata Olives' }
-    ]
-  },
-  {
-    id: '5',
-    title: 'Berry Breakfast Smoothie',
-    image: 'https://images.pexels.com/photos/434295/pexels-photo-434295.jpeg',
-    readyInMinutes: 5,
-    servings: 1,
-    sourceUrl: 'https://example.com/recipe5',
-    usedIngredientCount: 3,
-    missedIngredientCount: 1,
-    usedIngredients: [
-      { name: 'Banana' },
-      { name: 'Berries' },
-      { name: 'Yogurt' }
-    ],
-    missedIngredients: [
-      { name: 'Honey' }
-    ]
-  },
-  {
-    id: '6',
-    title: 'Easy Baked Salmon',
-    image: 'https://images.pexels.com/photos/3763847/pexels-photo-3763847.jpeg',
-    readyInMinutes: 25,
-    servings: 2,
-    sourceUrl: 'https://example.com/recipe6',
-    usedIngredientCount: 4,
-    missedIngredientCount: 2,
-    usedIngredients: [
-      { name: 'Salmon Fillet' },
-      { name: 'Lemon' },
-      { name: 'Garlic' },
-      { name: 'Olive Oil' }
-    ],
-    missedIngredients: [
-      { name: 'Fresh Dill' },
-      { name: 'Dijon Mustard' }
-    ]
-  }
-];
 
 const Recipes: React.FC = () => {
   const { items, loading } = useInventory();
@@ -134,28 +9,52 @@ const Recipes: React.FC = () => {
   const [loadingRecipes, setLoadingRecipes] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'relevance' | 'time'>('relevance');
+  const [currentPage, setCurrentPage] = useState(1);
+  const recipesPerPage = 9;
 
-  // Simulate loading recipes based on inventory
   useEffect(() => {
-    if (items.length > 0) {
+    const fetchRecipes = async () => {
+      if (items.length === 0) return;
+
       setLoadingRecipes(true);
-      
-      // Simulate API delay
-      const timer = setTimeout(() => {
-        setRecipes(mockRecipes);
+
+      try {
+        const ingredients = items.map(item => item.name).join(',');
+        const apiKey = import.meta.env.VITE_SPOONACULAR_API_KEY;
+        const response = await fetch(
+          `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${ingredients}&number=50&ranking=2&ignorePantry=true&apiKey=${apiKey}`
+        );
+        const data = await response.json();
+
+        const formattedRecipes: Recipe[] = data.map((recipe: any) => ({
+          id: recipe.id.toString(),
+          title: recipe.title,
+          image: recipe.image,
+          readyInMinutes: recipe.readyInMinutes || 30,
+          servings: recipe.servings || 2,
+          sourceUrl: `https://spoonacular.com/recipes/${recipe.title.replace(/ /g, '-')}-${recipe.id}`,
+          usedIngredientCount: recipe.usedIngredientCount,
+          missedIngredientCount: recipe.missedIngredientCount,
+          usedIngredients: recipe.usedIngredients.map((i: any) => ({ name: i.name })),
+          missedIngredients: recipe.missedIngredients.map((i: any) => ({ name: i.name }))
+        }));
+
+        setRecipes(formattedRecipes);
+        setCurrentPage(1); // reset page on new fetch
+      } catch (error) {
+        console.error('Failed to fetch recipes:', error);
+      } finally {
         setLoadingRecipes(false);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
+      }
+    };
+
+    fetchRecipes();
   }, [items]);
 
-  // Filter recipes by search term
-  const filteredRecipes = recipes.filter(recipe => 
+  const filteredRecipes = recipes.filter(recipe =>
     recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sort recipes
   const sortedRecipes = [...filteredRecipes].sort((a, b) => {
     if (sortBy === 'relevance') {
       return b.usedIngredientCount - a.usedIngredientCount;
@@ -164,13 +63,14 @@ const Recipes: React.FC = () => {
     }
   });
 
-  // Refresh recipes (simulate)
+  const indexOfLastRecipe = currentPage * recipesPerPage;
+  const indexOfFirstRecipe = indexOfLastRecipe - recipesPerPage;
+  const currentRecipes = sortedRecipes.slice(indexOfFirstRecipe, indexOfLastRecipe);
+  const totalPages = Math.ceil(sortedRecipes.length / recipesPerPage);
+
   const refreshRecipes = () => {
     setLoadingRecipes(true);
-    
     setTimeout(() => {
-      // Shuffle the recipes to simulate new results
-      setRecipes([...mockRecipes].sort(() => Math.random() - 0.5));
       setLoadingRecipes(false);
     }, 1000);
   };
@@ -189,7 +89,7 @@ const Recipes: React.FC = () => {
         <h1 className="text-2xl font-bold text-gray-800">Recipe Suggestions</h1>
         <p className="text-gray-600">Discover recipes based on what's in your inventory.</p>
       </header>
-      
+
       {items.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">Add items to get recipe suggestions</h2>
@@ -213,7 +113,7 @@ const Recipes: React.FC = () => {
                   className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <label htmlFor="sort" className="text-sm font-medium text-gray-700">
                   Sort by:
@@ -228,7 +128,7 @@ const Recipes: React.FC = () => {
                   <option value="time">Preparation Time</option>
                 </select>
               </div>
-              
+
               <button
                 onClick={refreshRecipes}
                 className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
@@ -239,23 +139,53 @@ const Recipes: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           {loadingRecipes ? (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
-          ) : sortedRecipes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedRecipes.map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-              ))}
-            </div>
+          ) : currentRecipes.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentRecipes.map((recipe) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6 space-x-2">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="bg-white rounded-lg shadow p-8 text-center">
               <p className="text-gray-600">No recipes found matching your search.</p>
             </div>
           )}
-          
+
           <div className="mt-6 bg-amber-50 rounded-lg p-4 border border-amber-100">
             <h3 className="font-medium text-amber-800 mb-1">Recipe Suggestion Tip</h3>
             <p className="text-amber-700 text-sm">

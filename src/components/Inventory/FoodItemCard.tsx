@@ -46,6 +46,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-gray-700",
         textColor: "text-gray-300",
         borderColor: "border-gray-600",
+        hoverBgColor: "hover:bg-gray-600/30",
+        shadowColor: "hover:shadow-gray-600/10",
       }
     } else if (daysUntilExpiration < 0) {
       return {
@@ -53,6 +55,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-red-900/50",
         textColor: "text-red-300",
         borderColor: "border-red-700",
+        hoverBgColor: "hover:bg-red-700/30",
+        shadowColor: "hover:shadow-red-700/10",
       }
     } else if (daysUntilExpiration == 0) {
       return {
@@ -60,6 +64,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-orange-900/50",
         textColor: "text-orange-300",
         borderColor: "border-orange-700",
+        hoverBgColor: "hover:bg-orange-700/30",
+        shadowColor: "hover:shadow-orange-700/10",
       }
     } else if (daysUntilExpiration <= 2) {
       return {
@@ -67,6 +73,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-amber-900/50",
         textColor: "text-amber-300",
         borderColor: "border-amber-700",
+        hoverBgColor: "hover:bg-amber-700/30",
+        shadowColor: "hover:shadow-amber-700/10",
       }
     } else if (daysUntilExpiration <= 7) {
       return {
@@ -74,6 +82,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-blue-900/50",
         textColor: "text-blue-300",
         borderColor: "border-blue-700",
+        hoverBgColor: "hover:bg-blue-700/30",
+        shadowColor: "hover:shadow-blue-700/10",
       }
     } else {
       return {
@@ -81,6 +91,8 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
         bgColor: "bg-emerald-900/50",
         textColor: "text-emerald-300",
         borderColor: "border-emerald-700",
+        hoverBgColor: "hover:bg-emerald-700/30",
+        shadowColor: "hover:shadow-emerald-700/10",
       }
     }
   }
@@ -89,7 +101,7 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({ item, onEdit, onDelete }) =
 
   return (
     <Card
-      className={`group overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-emerald-500/10 border ${status.borderColor} cursor-pointer hover:z-10 relative bg-gray-800 hover:bg-gray-750`}
+      className={`group overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl ${status.shadowColor} border ${status.borderColor} ${status.hoverBgColor} cursor-pointer hover:z-10 relative bg-gray-800`}
     >
       {/* Header with expiration status */}
       <div className={`${status.bgColor} px-3 py-2 flex justify-between items-center`}>

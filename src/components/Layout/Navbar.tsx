@@ -59,11 +59,11 @@ const Navbar: React.FC<NavbarProps> = () => {
           <div className="flex items-center">
             <Link
               to="/inventory"
-              className="text-emerald-400 hover:text-emerald-300 text-xl font-semibold mr-1 transition-colors"
+              className="text-emerald-400  text-xl font-semibold transition-colors"
             >
               Fridge
             </Link>
-            <Link to="/inventory" className="text-blue-400 hover:text-blue-300 text-xl font-semibold transition-colors">
+            <Link to="/inventory" className="text-blue-400  text-xl font-semibold transition-colors">
               Friend
             </Link>
           </div>
