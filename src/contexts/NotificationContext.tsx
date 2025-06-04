@@ -1,31 +1,26 @@
 import React, {
   createContext,
   useState,
-  useEffect,
   useContext,
   PropsWithChildren,
 } from "react";
 import { supabase } from "../lib/supabaseClient"; // Adjust the import path for your Supabase client
 import { useAuth } from "./useAuth"; // ✅ updated import
+import { sendNotificationEmail } from "../utils/sendNotificationEmail"; // Adjust the import path for your email service
 
 interface Notification {
   id: string;
   title: string;
   message: string;
   type: "info" | "warning" | "error" | "success";
-  read: boolean;
   createdAt: Date;
 }
 
 interface NotificationContextType {
   notifications: Notification[];
-  unreadCount: number;
   addNotification: (
     notification: Omit<Notification, "id" | "read" | "createdAt">
   ) => Promise<void>;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  clearNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -73,15 +68,45 @@ export const NotificationProvider: React.FC<PropsWithChildren> = ({
     if (!user) return;
 
     try {
-      const { error } = await supabase.from("notifications").insert([
-        {
-          ...notification,
-          user_id: user.id,
-          read: false,
-        },
-      ]);
+      const { data, error } = await supabase
+        .from("notifications")
+        .insert([
+          {
+            ...notification,
+            user_id: user.id,
+          },
+        ])
+        .select();
 
       if (error) throw error;
+
+      if (!data || data.length === 0)
+        throw new Error("No notification data returned");
+      const newNotification: Notification = data[0];
+
+      // 3) Immediately send an email to the user
+      // Check user's notification preferences before sending email
+      const { data: preferences, error: prefError } = await supabase
+        .from("profiles")
+        .select("email_notifications")
+        .eq("id", user.id)
+        .single();
+
+      if (prefError) {
+        console.error("Error checking notification preferences:", prefError);
+        return;
+      }
+
+      if (!preferences?.email_notifications) {
+        console.log("User has disabled email notifications");
+        return;
+      }
+      await sendNotificationEmail({
+        to_email: user.email!,
+        user_name: user.email!.split("@")[0],
+        title: newNotification.title,
+        message: newNotification.message,
+      });
 
       // Refetch notifications after adding
       await fetchNotifications();
@@ -90,76 +115,11 @@ export const NotificationProvider: React.FC<PropsWithChildren> = ({
     }
   };
 
-  // Mark a notification as read
-  const markAsRead = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      // Update state
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-    } catch (err) {
-      console.error("Error marking notification as read:", err);
-    }
-  };
-
-  // Mark all notifications as read
-  const markAllAsRead = async () => {
-    try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true })
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
-
-      // Update state
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    } catch (err) {
-      console.error("Error marking all notifications as read:", err);
-    }
-  };
-
-  // Clear all notifications
-  const clearNotifications = async () => {
-    try {
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
-
-      // Clear state
-      setNotifications([]);
-    } catch (err) {
-      console.error("Error clearing notifications:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   return (
     <NotificationContext.Provider
       value={{
         notifications,
-        unreadCount,
         addNotification,
-        markAsRead,
-        markAllAsRead,
-        clearNotifications,
       }}
     >
       {children}

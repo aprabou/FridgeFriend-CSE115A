@@ -112,7 +112,6 @@ const Settings: React.FC = () => {
   const [notificationSettings, setNotificationSettings] = useState({
     expiryNotifications: true,
     inventoryUpdates: true,
-    recipeRecommendations: true,
     emailNotifications: true,
   });
 
@@ -173,7 +172,6 @@ const Settings: React.FC = () => {
         `
         expiry_notifications,
         inventory_updates,
-        recipe_recommendations,
         email_notifications
       `
       )
@@ -186,7 +184,6 @@ const Settings: React.FC = () => {
     setNotificationSettings({
       expiryNotifications: data.expiry_notifications,
       inventoryUpdates: data.inventory_updates,
-      recipeRecommendations: data.recipe_recommendations,
       emailNotifications: data.email_notifications,
     });
   };
@@ -307,7 +304,6 @@ const Settings: React.FC = () => {
       .update({
         expiry_notifications: notificationSettings.expiryNotifications,
         inventory_updates: notificationSettings.inventoryUpdates,
-        recipe_recommendations: notificationSettings.recipeRecommendations,
         email_notifications: notificationSettings.emailNotifications,
       })
       .eq("id", user!.id);
