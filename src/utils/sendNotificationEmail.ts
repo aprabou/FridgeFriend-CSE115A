@@ -6,7 +6,7 @@ import {
 } from "../lib/emailjsClient";
 
 interface NotificationPayload {
-  to_email: string;
+  to_email: Array<string>;
   user_name: string;
   message: string; // e.g. "Milk (expires today), Eggs (expired 1 day ago)"
   title: string;
@@ -25,13 +25,13 @@ export function sendNotificationEmail(payload: NotificationPayload) {
     .then(
       (response: { status: number; text: string }) => {
         console.log(
-          "[EmailJS] Sent expiry notification:",
+          "[EmailJS] Sent notification:",
           response.status,
           response.text
         );
       },
       (error: unknown) => {
-        console.error("[EmailJS] Failed to send expiry notification:", error);
+        console.error("[EmailJS] Failed to send notification:", error);
       }
     );
 }

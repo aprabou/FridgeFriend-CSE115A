@@ -219,15 +219,45 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const getSoonToExpire = () => {
+  const [alertedExpiryIds, setAlertedExpiryIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Pure helper: get all items expiring in the next 7 days
+  const getSoonToExpire = (): FoodItem[] => {
     const today = new Date();
-    const inSeven = new Date();
+    const inSeven = new Date(today);
     inSeven.setDate(today.getDate() + 7);
+
     return items.filter((it) => {
       const exp = new Date(it.expiration);
       return exp >= today && exp <= inSeven;
     });
   };
+
+  // useEffect: whenever `items` changes, run expiry logic once
+  useEffect(() => {
+    if (!items.length) return;
+
+    const soon = getSoonToExpire();
+    soon.forEach((item) => {
+      if (!alertedExpiryIds.has(item.id)) {
+        // We haven’t alerted for this item yet
+        addNotification({
+          title: "Item Expiring Soon",
+          message: `${item.name} will expire on ${new Date(
+            item.expiration
+          ).toLocaleDateString()}`,
+          type: "warning",
+        });
+        // Mark it as “alerted” so we don’t send again
+        setAlertedExpiryIds((prev) => new Set(prev).add(item.id));
+      }
+    });
+
+    // (Optional) If you want to clear the set for truly new data:
+    // remove IDs that are no longer in `soon`, etc.
+  }, [items]); // run this effect whenever `items` array changes
 
   const getStorageLocationCounts = () =>
     items.reduce((acc, it) => {

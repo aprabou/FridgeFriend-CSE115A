@@ -112,7 +112,6 @@ const Settings: React.FC = () => {
   const [notificationSettings, setNotificationSettings] = useState({
     expiryNotifications: true,
     inventoryUpdates: true,
-    emailNotifications: true,
   });
 
   // On mount: load profile + notifications
@@ -171,8 +170,7 @@ const Settings: React.FC = () => {
       .select(
         `
         expiry_notifications,
-        inventory_updates,
-        email_notifications
+        inventory_updates
       `
       )
       .eq("id", user!.id)
@@ -184,7 +182,6 @@ const Settings: React.FC = () => {
     setNotificationSettings({
       expiryNotifications: data.expiry_notifications,
       inventoryUpdates: data.inventory_updates,
-      emailNotifications: data.email_notifications,
     });
   };
   // ────────────────────────────────────────────────────────────────
@@ -304,7 +301,6 @@ const Settings: React.FC = () => {
       .update({
         expiry_notifications: notificationSettings.expiryNotifications,
         inventory_updates: notificationSettings.inventoryUpdates,
-        email_notifications: notificationSettings.emailNotifications,
       })
       .eq("id", user!.id);
 

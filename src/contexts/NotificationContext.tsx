@@ -88,7 +88,7 @@ export const NotificationProvider: React.FC<PropsWithChildren> = ({
       // Check user's notification preferences before sending email
       const { data: preferences, error: prefError } = await supabase
         .from("profiles")
-        .select("email_notifications")
+        .select("inventory_updates, expiry_notifications")
         .eq("id", user.id)
         .single();
 
@@ -97,7 +97,7 @@ export const NotificationProvider: React.FC<PropsWithChildren> = ({
         return;
       }
 
-      if (!preferences?.email_notifications) {
+      if (!preferences?.inventory_updates) {
         console.log("User has disabled email notifications");
         return;
       }
