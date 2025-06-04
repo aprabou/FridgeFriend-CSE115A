@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '../contexts/useInventory';
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';
 import { SearchIcon, RefreshCwIcon } from 'lucide-react';
+import "../components-css/recipeCard.css"
 
 const Recipes: React.FC = () => {
   const { items, loading } = useInventory();
@@ -84,14 +85,14 @@ const Recipes: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Recipe Suggestions</h1>
+    <div className="max-w-6xl mx-auto mb-6">
+      <header className="mb-6 mt-8">
+        <h1 className="text-3xl font-bold text-white">Recipe Suggestions</h1>
         <p className="text-gray-600">Discover recipes based on what's in your inventory.</p>
       </header>
 
       {items.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
+        <div className="rounded-lg shadow p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">Add items to get recipe suggestions</h2>
           <p className="text-gray-600 mb-6">
             Your inventory is empty. Add items to get personalized recipe suggestions.
@@ -99,7 +100,7 @@ const Recipes: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="dark-search rounded-lg shadow p-4 mb-6">
             <div className="flex flex-wrap gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
