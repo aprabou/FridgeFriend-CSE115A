@@ -82,9 +82,9 @@ const Invitations: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold mb-4">Pending Invitations</h2>
+      <h2 className="text-2xl font-semibold text-white mb-4">Pending Invitations</h2>
       {invites.length === 0 ? (
-        <p className="text-gray-700">You have no pending invitations.</p>
+        <p className="text-gray-400">You have no pending invitations.</p>
       ) : (
         <ul className="space-y-3">
           {invites.map((inv) => (
