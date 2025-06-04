@@ -6,7 +6,7 @@ import {
 } from "../lib/emailjsClient";
 
 interface NotificationPayload {
-  to_email: Array<string>;
+  to_email: string;
   user_name: string;
   message: string; // e.g. "Milk (expires today), Eggs (expired 1 day ago)"
   title: string;

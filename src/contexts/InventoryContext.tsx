@@ -177,12 +177,34 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
       // Update the state with the new item
       setItems((prev) => [...prev, newItem]);
 
-      // Add a notification for the new item
-      addNotification({
-        title: "Item Added",
-        message: `The item "${item.name}" has been added to your inventory.`,
-        type: "info",
-      });
+      // Fetch all household members to notify them
+      const { data: householdMembers, error: membersError } = await supabase
+        .from("household_members")
+        .select("user_id")
+        .eq("household_id", householdId)
+        .eq("status", "accepted");
+      
+      if (membersError) throw membersError;
+
+      // Fetch profiles for all household members
+      const userIds = householdMembers?.map(member => member.user_id) || [];
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Send notifications to all household members
+      for (const profile of profiles || []) {
+        if (profile.email) {
+          addNotification({
+            title: "Item Added",
+            message: `The item "${item.name}" has been added to your household inventory.`,
+            type: "info",
+          });
+        }
+      }
     } catch (err: any) {
       console.error("Error adding item:", err);
       setError(err.message);
@@ -240,17 +262,46 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!items.length) return;
 
     const soon = getSoonToExpire();
-    soon.forEach((item) => {
+    soon.forEach(async (item) => {
       if (!alertedExpiryIds.has(item.id)) {
-        // We haven’t alerted for this item yet
-        addNotification({
-          title: "Item Expiring Soon",
-          message: `${item.name} will expire on ${new Date(
-            item.expiration
-          ).toLocaleDateString()}`,
-          type: "warning",
-        });
-        // Mark it as “alerted” so we don’t send again
+        // Fetch all household members to notify them
+        const { data: householdMembers, error: membersError } = await supabase
+          .from("household_members")
+          .select("user_id")
+          .eq("household_id", item.household_id)
+          .eq("status", "accepted");
+        
+        if (membersError) {
+          console.error("Error fetching household members:", membersError);
+          return;
+        }
+
+        // Fetch profiles for all household members
+        const userIds = householdMembers?.map(member => member.user_id) || [];
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, email")
+          .in("id", userIds);
+
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+          return;
+        }
+
+        // Send notifications to all household members
+        for (const profile of profiles || []) {
+          if (profile.email) {
+            addNotification({
+              title: "Item Expiring Soon",
+              message: `${item.name} will expire on ${new Date(
+                item.expiration
+              ).toLocaleDateString()}`,
+              type: "warning",
+            });
+          }
+        }
+
+        // Mark it as "alerted" so we don't send again
         setAlertedExpiryIds((prev) => new Set(prev).add(item.id));
       }
     });
