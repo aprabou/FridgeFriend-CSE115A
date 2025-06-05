@@ -1,4 +1,6 @@
 // src/contexts/useProfile.tsx
+//Defines a custom React hook and context to manage user profile data
+//Including fetching, updating, and providing access to profile information from Supabase
 import React, {
   createContext,
   useContext,

@@ -1,3 +1,5 @@
+//Defines a React context to manage notifications
+//Including adding and storing notification details like title, message, type, and timestamp
 import React, {
   createContext,
   useState,
