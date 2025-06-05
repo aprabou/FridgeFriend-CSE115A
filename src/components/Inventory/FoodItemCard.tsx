@@ -1,3 +1,6 @@
+//Defines and exports a React component that displays details of a food item, including expiration and purchase dates
+//It calculates the number of days until expiration and provides edit and delete functionality through callback props
+        
 "use client"
 
 import type React from "react"

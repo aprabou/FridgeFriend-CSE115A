@@ -1,3 +1,5 @@
+//Defines and exports a React component that provides a form for adding or editing food items in an inventory
+//It manages form state with useState, pre-fills fields when editing an existing item, and handles submission and closure
 "use client"
 
 import type React from "react"
@@ -14,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+
 
 interface AddItemFormProps {
   /** existing item when editing */

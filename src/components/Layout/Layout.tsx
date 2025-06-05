@@ -1,10 +1,11 @@
+//Defines and exports a React component that serves as the main layout for the application
+//Includes a Sidebar, Navbar, and a NotificationCenter for notification control
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
-import NotificationCenter from '../Notifications/NotificationCenter';
-//import { useNotifications } from '../../contexts/NotificationContext';
-import { useNotifications } from '../../contexts/useNotifications'; // ✅ correct
+import NotificationCenter from '../Notifications/NotificationCenter';;
+import { useNotifications } from '../../contexts/useNotifications'; 
 import "./globals.css"
 
 

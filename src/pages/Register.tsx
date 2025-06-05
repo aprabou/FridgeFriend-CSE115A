@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+//Defines a React component that provides a registration form
+//Allowing users to input their email, phone, password, and confirm password
+//All while handling form validation, error messages, and user sign-up using the useAuth context
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 //import { useAuth } from "../contexts/AuthContext";

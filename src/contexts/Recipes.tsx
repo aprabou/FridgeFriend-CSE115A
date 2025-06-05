@@ -1,3 +1,4 @@
+//Defines a React component that displays a list of recipes, while integrating inventory data from the InventoryContext
 import React, { useState, useEffect } from 'react';
 import { useInventory } from '../contexts/InventoryContext';
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';

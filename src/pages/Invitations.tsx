@@ -1,5 +1,7 @@
 // src/pages/Invitations.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
+//Defines a React component that fetches and displays a list of pending household invitations for the logged-in user
+//Uses Supabase for database queries and React state for managing the invitations
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../contexts/useAuth";

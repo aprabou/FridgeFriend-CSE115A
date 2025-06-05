@@ -1,5 +1,7 @@
 "use client"
-
+//Defines a React component that allows users to manage their account settings
+//Including updating their profile, handling authentication actions like signing out
+//Also managing household-related settings using Supabase and custom hooks
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type React from "react"
@@ -113,9 +115,7 @@ const Settings: React.FC = () => {
   const [notificationSettings, setNotificationSettings] = useState({
     expiryNotifications: true,
     inventoryUpdates: true,
-    recipeRecommendations: true,
-    emailNotifications: true,
-  })
+  });
 
   // On mount: load profile + notifications
   useEffect(() => {
@@ -223,10 +223,8 @@ const Settings: React.FC = () => {
       .select(
         `
         expiry_notifications,
-        inventory_updates,
-        recipe_recommendations,
-        email_notifications
-      `,
+        inventory_updates
+      `
       )
       .eq("id", user!.id)
       .single()
@@ -237,10 +235,8 @@ const Settings: React.FC = () => {
     setNotificationSettings({
       expiryNotifications: data.expiry_notifications,
       inventoryUpdates: data.inventory_updates,
-      recipeRecommendations: data.recipe_recommendations,
-      emailNotifications: data.email_notifications,
-    })
-  }
+    });
+  };
   // ────────────────────────────────────────────────────────────────
 
   // ── Household Name Update ──────────────────────────────────────
@@ -353,8 +349,6 @@ const Settings: React.FC = () => {
       .update({
         expiry_notifications: notificationSettings.expiryNotifications,
         inventory_updates: notificationSettings.inventoryUpdates,
-        recipe_recommendations: notificationSettings.recipeRecommendations,
-        email_notifications: notificationSettings.emailNotifications,
       })
       .eq("id", user!.id)
 

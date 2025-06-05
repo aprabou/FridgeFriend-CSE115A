@@ -1,3 +1,7 @@
+// src/components/Layout/Navbar.tsx
+//Defines and exports a React component that renders a navigation bar for the application
+//Manages user interactions like toggling menus and handles user logout via the useAuth context
+//Provides navigation functionality using react-router-dom
 "use client"
 
 import type React from "react"
@@ -8,6 +12,7 @@ import { useAuth } from "../../contexts/useAuth"
 import { useProfile } from "../../contexts/useProfile"
 import { useNotification } from "../../contexts/NotificationContext"
 
+
 export interface NavbarProps {
   unreadCount: number
   onNotificationClick: () => void
@@ -15,6 +20,7 @@ export interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = () => {
+
   const { signOut } = useAuth()
   const { profile } = useProfile()
   const navigate = useNavigate()

@@ -1,3 +1,5 @@
+//Initializes and exports a Supabase client using credentials from environment variables
+//Throws an error if the required variables are missing
 import { createClient } from '@supabase/supabase-js';
 
 // Load from Vite env variables

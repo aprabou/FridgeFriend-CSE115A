@@ -1,3 +1,5 @@
+//Defines a React component that displays a list of food items from the inventory
+//Allows users to add, edit, delete, and filter items, while managing form visibility and filter states
 "use client"
 
 import type React from "react"
