@@ -1,3 +1,4 @@
+//Defines a React component that renders a styled sidebar with navigation links and icons for different sections of the application
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { HomeIcon, PackageIcon, CookingPotIcon, SettingsIcon } from 'lucide-react';
