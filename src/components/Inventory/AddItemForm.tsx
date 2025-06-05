@@ -2,16 +2,18 @@
 
 import type React from "react"
 import { useState } from "react"
-import { XIcon, CalendarIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import type { FoodItem } from "../../contexts/InventoryContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import "../../components-css/addItemForm.css"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface AddItemFormProps {
   /** existing item when editing */
@@ -23,6 +25,8 @@ interface AddItemFormProps {
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClose }) => {
   const [expirationTouched, setExpirationTouched] = useState(false)
+
+  // Keep purchaseDate and expirationDate as Date objects (or null)
   const [formData, setFormData] = useState(() => {
     const today = new Date()
     const purchaseDate = item?.purchased ? new Date(item.purchased) : today
@@ -48,11 +52,16 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClos
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleDateChange = (name: string, date: Date | undefined) => {
+  // When the user picks a native date string, convert it back to Date
+  const handleDateInputChange = (name: "purchaseDate" | "expirationDate", value: string) => {
+    const newDate = value ? new Date(value) : null
     if (name === "expirationDate") {
       setExpirationTouched(true)
     }
-    setFormData((prev) => ({ ...prev, [name]: date }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: newDate,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +92,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClos
     }
   }
 
-  // Determine if we should show the error state for expiration
+  // Only show the “required” error if user has touched and not provided a date
   const showExpirationError = expirationTouched && !formData.expirationDate
 
   return (
@@ -194,37 +203,57 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClos
               </div>
             </div>
 
-            {/* Dates Row */}
+            {/* Dates Row: Purchase Date & Expiration Date with Calendar Popover */}
             <div className="grid grid-cols-2 gap-2">
               {/* Purchase Date */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-300">Purchase Date*</label>
+                <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-300">
+                  Purchase Date*
+                </label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal rounded-full border-gray-600 bg-gray-700 text-gray-100 hover:bg-gray-600 hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-emerald-400" />
-                      {formData.purchaseDate ? (
-                        <span className="text-xs">{format(formData.purchaseDate, "MMM d")}</span>
-                      ) : (
-                        <span className="text-gray-400 text-xs">Pick date</span>
+                      className={cn(
+                        "w-full justify-start text-left font-normal rounded-full border-gray-600 bg-gray-700 text-gray-100 hover:bg-gray-600 hover:border-emerald-500 hover:text-emerald-400 focus:border-emerald-500 focus:ring-emerald-500 transition-colors cursor-pointer",
+                        !formData.purchaseDate && "text-gray-400",
                       )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.purchaseDate ? format(formData.purchaseDate, "MMM d") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-xl bg-gray-700 border-gray-600" align="start">
+                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-600" align="start">
                     <Calendar
                       mode="single"
-                      selected={formData.purchaseDate || undefined}
-                      onSelect={(date) => handleDateChange("purchaseDate", date)}
+                      selected={formData.purchaseDate}
+                      onSelect={(date) => handleDateInputChange("purchaseDate", date ? format(date, "yyyy-MM-dd") : "")}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                       initialFocus
-                      className="rounded-xl border-0 bg-gray-700 text-gray-100"
+                      className="bg-gray-800 text-gray-100"
                       classNames={{
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                        month: "space-y-4",
+                        caption: "flex justify-center pt-1 relative items-center text-gray-100",
+                        caption_label: "text-sm font-medium text-gray-100",
+                        nav: "space-x-1 flex items-center",
+                        nav_button:
+                          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-gray-100 hover:bg-gray-700 rounded-md",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex",
+                        head_cell: "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]",
+                        row: "flex w-full mt-2",
+                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-emerald-600 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-700 hover:text-emerald-400 rounded-md transition-colors",
                         day_selected:
-                          "bg-emerald-600 text-gray-900 hover:bg-emerald-500 hover:text-gray-900 cursor-pointer",
-                        day_today: "bg-gray-600 text-gray-50 cursor-pointer",
-                        day: "hover:bg-gray-600 hover:text-emerald-400 cursor-pointer",
+                          "bg-emerald-600 text-white hover:bg-emerald-500 hover:text-white focus:bg-emerald-600 focus:text-white",
+                        day_today: "bg-gray-700 text-emerald-400",
+                        day_outside: "text-gray-500 opacity-50",
+                        day_disabled: "text-gray-500 opacity-50",
+                        day_range_middle: "aria-selected:bg-emerald-600 aria-selected:text-white",
+                        day_hidden: "invisible",
                       }}
                     />
                   </PopoverContent>
@@ -233,45 +262,59 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ item = null, onSubmit, onClos
 
               {/* Expiration Date */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-300">
+                <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-300">
                   Expiration Date*
                   {showExpirationError && <span className="text-red-400 text-xs ml-1">(Required)</span>}
                 </label>
-                <Popover onOpenChange={() => !expirationTouched && setExpirationTouched(true)}>
+                <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={`w-full justify-start text-left font-normal rounded-full border-gray-600 bg-gray-700 hover:bg-gray-600 hover:border-emerald-500 ${
+                      className={cn(
+                        "w-full justify-start text-left font-normal rounded-full border-gray-600 bg-gray-700 hover:bg-gray-600 hover:border-emerald-500 transition-colors cursor-pointer",
+                        !formData.expirationDate && "text-gray-400",
                         showExpirationError
-                          ? "text-red-400 border-red-600 hover:text-red-400"
-                          : "text-gray-100 hover:text-emerald-400"
-                      } transition-colors cursor-pointer`}
-                    >
-                      <CalendarIcon
-                        className={`mr-2 h-4 w-4 ${formData.expirationDate ? "text-emerald-400" : showExpirationError ? "text-red-400" : "text-gray-400"}`}
-                      />
-                      {formData.expirationDate ? (
-                        <span className="text-xs">{format(formData.expirationDate, "MMM d")}</span>
-                      ) : (
-                        <span className={`text-xs ${showExpirationError ? "text-red-400" : "text-gray-400"}`}>
-                          Select date
-                        </span>
+                          ? "text-red-400 border-red-600 hover:text-red-400 hover:border-red-500"
+                          : "text-gray-100 hover:text-emerald-400 focus:border-emerald-500 focus:ring-emerald-500",
                       )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.expirationDate ? format(formData.expirationDate, "MMM d") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-xl bg-gray-700 border-gray-600" align="start">
+                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-600" align="start">
                     <Calendar
                       mode="single"
-                      selected={formData.expirationDate || undefined}
-                      onSelect={(date) => handleDateChange("expirationDate", date)}
+                      selected={formData.expirationDate}
+                      onSelect={(date) =>
+                        handleDateInputChange("expirationDate", date ? format(date, "yyyy-MM-dd") : "")
+                      }
+                      disabled={(date) => date < new Date("1900-01-01")}
                       initialFocus
-                      className="rounded-xl border-0 bg-gray-700 text-gray-100"
-                      fromDate={new Date()} // Can't select dates in the past for expiration
+                      className="bg-gray-800 text-gray-100"
                       classNames={{
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                        month: "space-y-4",
+                        caption: "flex justify-center pt-1 relative items-center text-gray-100",
+                        caption_label: "text-sm font-medium text-gray-100",
+                        nav: "space-x-1 flex items-center",
+                        nav_button:
+                          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 text-gray-100 hover:bg-gray-700 rounded-md",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex",
+                        head_cell: "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]",
+                        row: "flex w-full mt-2",
+                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-emerald-600 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-700 hover:text-emerald-400 rounded-md transition-colors",
                         day_selected:
-                          "bg-emerald-600 text-gray-900 hover:bg-emerald-500 hover:text-gray-900 cursor-pointer",
-                        day_today: "bg-gray-600 text-gray-50 cursor-pointer",
-                        day: "hover:bg-gray-600 hover:text-emerald-400 cursor-pointer",
+                          "bg-emerald-600 text-white hover:bg-emerald-500 hover:text-white focus:bg-emerald-600 focus:text-white",
+                        day_today: "bg-gray-700 text-emerald-400",
+                        day_outside: "text-gray-500 opacity-50",
+                        day_disabled: "text-gray-500 opacity-50",
+                        day_range_middle: "aria-selected:bg-emerald-600 aria-selected:text-white",
+                        day_hidden: "invisible",
                       }}
                     />
                   </PopoverContent>
