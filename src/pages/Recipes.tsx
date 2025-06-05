@@ -99,7 +99,7 @@ const Recipes: React.FC = () => {
     <div className="max-w-6xl mx-auto mb-6">
       <header className="mb-6 mt-8">
         <h1 className="text-3xl font-bold text-white">Recipe Suggestions</h1>
-        <p className="text-white">
+        <p className="text-gray-400">
           Discover recipes based on what's in your inventory.
         </p>
       </header>
@@ -109,7 +109,7 @@ const Recipes: React.FC = () => {
           <h2 className="text-xl font-semibold mb-2 text-white">
             Add items to get recipe suggestions
           </h2>
-          <p className="text-white mb-6">
+          <p className="text-gray-400 mb-6">
             Your inventory is empty. Add items to get personalized recipe
             suggestions.
           </p>
