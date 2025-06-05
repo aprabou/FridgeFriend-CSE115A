@@ -1,4 +1,10 @@
 {
+  "compilerOptions": {
+    "baseUrl": ".",                    // ✅ Enables absolute paths
+    "paths": {
+      "@/*": ["src/*"]                // ✅ Adds @ alias
+    }
+  },
   "extends": "./tsconfig.app.json",
   "include": [
     "src",

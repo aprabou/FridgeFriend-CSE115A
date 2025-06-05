@@ -188,7 +188,7 @@ const Recipes: React.FC = () => {
     <div className="max-w-6xl mx-auto">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Recipe Suggestions</h1>
-        <p className="text-gray-600">Discover recipes based on what's in your inventory.</p>
+        <p className="text-gray-300">Discover recipes based on what's in your inventory.</p>
       </header>
       
       {items.length === 0 ? (
