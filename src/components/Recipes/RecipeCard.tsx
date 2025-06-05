@@ -1,3 +1,6 @@
+//Renders lists of used and missing ingredients for a recipe, styling each ingredient as a tag
+//Used ingredients are displayed with a green background and missing ingredients are shown with a gray background
+//Both backgrounds are conditionally rendered based on the recipe data
 import React from 'react';
 import { ClockIcon, UsersIcon, GlobeIcon } from 'lucide-react';
 

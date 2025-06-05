@@ -1,3 +1,6 @@
+//Defines a React component that allows users to search for recipes based on ingredients
+//It fetches recipe data from the Spoonacular API and processes additional recipe details
+//Manages the loading state and recipe list using React state
 import React, { useState } from 'react';
 import RecipeCard, { Recipe } from './RecipeCard';
 
