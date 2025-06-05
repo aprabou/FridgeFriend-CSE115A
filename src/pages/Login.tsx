@@ -18,16 +18,13 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!email || !password) {
       setError("Please fill in all fields");
       return;
     }
-
     setError("");
     setLoading(true);
     try {
-      // signIn throws on error, so no destructuring needed
       await signIn(email, password);
       navigate("/");
     } catch (err: any) {
@@ -39,19 +36,19 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
+    <div className="fixed inset-0 bg-gray-900 flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-md">
+        <div className="flex justify-center mb-6">
           <div className="flex items-center">
             <ShoppingBagIcon size={32} className="text-green-500 mr-2" />
             <span className="text-green-500 text-2xl font-bold">Fridge</span>
             <span className="text-blue-500 text-2xl font-bold">Friend</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+        <h2 className="text-center text-3xl font-extrabold text-white mb-2">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-white">
+        <p className="text-center text-sm text-white mb-6">
           Or{" "}
           <Link
             to="/register"
@@ -60,9 +57,7 @@ const Login: React.FC = () => {
             create a new account
           </Link>
         </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
