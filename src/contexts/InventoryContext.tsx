@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "./useAuth";
 import { useContext } from "react";
 import { useNotification } from "./NotificationContext";
+import { sendNotificationEmail } from "../utils/sendNotificationEmail";
 
 export interface FoodItem {
   id: string;
@@ -178,32 +179,88 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
       // Update the state with the new item
       setItems((prev) => [...prev, newItem]);
 
-      // Fetch all household members to notify them
-      const { data: householdMembers, error: membersError } = await supabase
-        .from("household_members")
-        .select("user_id")
-        .eq("household_id", householdId)
-        .eq("status", "accepted");
-      
-      if (membersError) throw membersError;
+      // Send web notification to current user
+      if (user?.email) {
+        // Check if this notification was already shown for this item
+        const { data: existingNotification } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("title", "Item Added")
+          .eq(
+            "message",
+            `The item "${item.name}" has been added to your household inventory.`
+          )
+          .gte(
+            "created_at",
+            new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          ) // Within last 24 hours
+          .single();
 
-      // Fetch profiles for all household members
-      const userIds = householdMembers?.map(member => member.user_id) || [];
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .in("id", userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Send notifications to all household members
-      for (const profile of profiles || []) {
-        if (profile.email) {
+        if (!existingNotification) {
           addNotification({
             title: "Item Added",
             message: `The item "${item.name}" has been added to your household inventory.`,
             type: "info",
           });
+        }
+      }
+
+      // Send email notifications to all household members
+      const { data: householdMembers, error: membersError } = await supabase
+        .from("household_members")
+        .select("user_id")
+        .eq("household_id", householdId)
+        .eq("status", "accepted");
+
+      if (membersError) throw membersError;
+
+      // Get unique user IDs (excluding current user)
+      const otherUserIds =
+        householdMembers
+          ?.filter((member) => member.user_id !== user?.id)
+          .map((member) => member.user_id) || [];
+
+      if (otherUserIds.length > 0) {
+        // Fetch profiles for other household members
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, email, inventory_updates")
+          .in("id", otherUserIds);
+
+        if (profilesError) throw profilesError;
+
+        // Send email notifications to other members who have enabled notifications
+        for (const profile of profiles || []) {
+          if (profile.email && profile.inventory_updates) {
+            // Check if email was already sent for this item
+            const { data: existingEmail } = await supabase
+              .from("notification_emails")
+              .select("id")
+              .eq("user_id", profile.id)
+              .eq("item_id", newItem.id)
+              .eq("type", "item_added")
+              .single();
+
+            if (!existingEmail) {
+              await sendNotificationEmail({
+                to_email: profile.email,
+                user_name: profile.email.split("@")[0],
+                title: "Item Added to Household Inventory",
+                message: `The item "${item.name}" has been added to your household inventory.`,
+              });
+
+              // Record that email was sent
+              await supabase.from("notification_emails").insert([
+                {
+                  user_id: profile.id,
+                  item_id: newItem.id,
+                  type: "item_added",
+                  sent_at: new Date().toISOString(),
+                },
+              ]);
+            }
+          }
         }
       }
     } catch (err: any) {
@@ -265,33 +322,27 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
     const soon = getSoonToExpire();
     soon.forEach(async (item) => {
       if (!alertedExpiryIds.has(item.id)) {
-        // Fetch all household members to notify them
-        const { data: householdMembers, error: membersError } = await supabase
-          .from("household_members")
-          .select("user_id")
-          .eq("household_id", item.household_id)
-          .eq("status", "accepted");
-        
-        if (membersError) {
-          console.error("Error fetching household members:", membersError);
-          return;
-        }
+        // Send web notification to current user
+        if (user?.email) {
+          // Check if this notification was already shown for this item
+          const { data: existingNotification } = await supabase
+            .from("notifications")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("title", "Item Expiring Soon")
+            .eq(
+              "message",
+              `${item.name} will expire on ${new Date(
+                item.expiration
+              ).toLocaleDateString()}`
+            )
+            .gte(
+              "created_at",
+              new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+            ) // Within last 24 hours
+            .single();
 
-        // Fetch profiles for all household members
-        const userIds = householdMembers?.map(member => member.user_id) || [];
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, email")
-          .in("id", userIds);
-
-        if (profilesError) {
-          console.error("Error fetching profiles:", profilesError);
-          return;
-        }
-
-        // Send notifications to all household members
-        for (const profile of profiles || []) {
-          if (profile.email) {
+          if (!existingNotification) {
             addNotification({
               title: "Item Expiring Soon",
               message: `${item.name} will expire on ${new Date(
@@ -299,6 +350,72 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({
               ).toLocaleDateString()}`,
               type: "warning",
             });
+          }
+        }
+
+        // Send email notifications to all household members
+        const { data: householdMembers, error: membersError } = await supabase
+          .from("household_members")
+          .select("user_id")
+          .eq("household_id", item.household_id)
+          .eq("status", "accepted");
+
+        if (membersError) {
+          console.error("Error fetching household members:", membersError);
+          return;
+        }
+
+        // Get unique user IDs (excluding current user)
+        const otherUserIds =
+          householdMembers
+            ?.filter((member) => member.user_id !== user?.id)
+            .map((member) => member.user_id) || [];
+
+        if (otherUserIds.length > 0) {
+          // Fetch profiles for other household members
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, email, expiry_notifications")
+            .in("id", otherUserIds);
+
+          if (profilesError) {
+            console.error("Error fetching profiles:", profilesError);
+            return;
+          }
+
+          // Send email notifications to other members who have enabled notifications
+          for (const profile of profiles || []) {
+            if (profile.email && profile.expiry_notifications) {
+              // Check if email was already sent for this item
+              const { data: existingEmail } = await supabase
+                .from("notification_emails")
+                .select("id")
+                .eq("user_id", profile.id)
+                .eq("item_id", item.id)
+                .eq("type", "item_expiring")
+                .single();
+
+              if (!existingEmail) {
+                await sendNotificationEmail({
+                  to_email: profile.email,
+                  user_name: profile.email.split("@")[0],
+                  title: "Item Expiring Soon",
+                  message: `${item.name} will expire on ${new Date(
+                    item.expiration
+                  ).toLocaleDateString()}`,
+                });
+
+                // Record that email was sent
+                await supabase.from("notification_emails").insert([
+                  {
+                    user_id: profile.id,
+                    item_id: item.id,
+                    type: "item_expiring",
+                    sent_at: new Date().toISOString(),
+                  },
+                ]);
+              }
+            }
           }
         }
 
