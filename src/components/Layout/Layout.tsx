@@ -4,7 +4,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
-import NotificationCenter from '../Notifications/NotificationCenter';;
+// import NotificationCenter from '../Notifications/NotificationCenter';
 import { useNotifications } from '../../contexts/useNotifications'; 
 import "./globals.css"
 
@@ -34,7 +34,7 @@ const Layout: React.FC = () => {
             className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-lg"
             onClick={e => e.stopPropagation()}
           >
-            <NotificationCenter onClose={() => setShowNotifications(false)} />
+            {/* <NotificationCenter onClose={() => setShowNotifications(false)} /> */}
           </div>
         </div>
       )}
