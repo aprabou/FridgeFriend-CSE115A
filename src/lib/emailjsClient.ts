@@ -1,4 +1,6 @@
 // src/emailjs.ts
+//Initializes the EmailJS client with a user ID from environment variables 
+//Exports the EmailJS instance along with predefined service and template IDs for sending emails
 import emailjs from "emailjs-com";
 
 const EMAILJS_USER_ID = import.meta.env.VITE_EMAILJS_USER_ID!; // or NEXT_PUBLIC_... if Next.js
