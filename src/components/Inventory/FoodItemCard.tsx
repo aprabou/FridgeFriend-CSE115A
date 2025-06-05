@@ -1,3 +1,5 @@
+//Defines and exports a React component that displays details of a food item, including expiration and purchase dates
+//It calculates the number of days until expiration and provides edit and delete functionality through callback props
 import React from "react";
 import { Trash2Icon, EditIcon } from "lucide-react";
 import { FoodItem } from "../../contexts/InventoryContext";

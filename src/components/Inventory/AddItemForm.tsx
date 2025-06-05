@@ -1,3 +1,5 @@
+//Defines and exports a React component that provides a form for adding or editing food items in an inventory
+//It manages form state with useState, pre-fills fields when editing an existing item, and handles submission and closure
 import React, { useState } from 'react';
 import { XIcon, CameraIcon } from 'lucide-react';
 import { FoodItem } from '../../contexts/InventoryContext';
