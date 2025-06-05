@@ -1,6 +1,9 @@
+//Defines and exports a React functional component called StorageDistribution
+//Component retrieves storage location using useInventory context
+//Calculates total items, formats location names and color styles for locations
 import React from 'react';
 import { PackageIcon } from 'lucide-react';
-import { useInventory } from '../../contexts/useInventory'; // ✅ correct path
+import { useInventory } from '../../contexts/useInventory';
 
 
 const StorageDistribution: React.FC = () => {
