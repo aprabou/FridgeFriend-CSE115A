@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+//Defines a React component that provides a login form
+//Allowing users to enter their email and password, handle form submission, and authenticate using the useAuth context
+//All while managing loading and error states
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth"; // ✅ updated path
+import { useAuth } from "../contexts/useAuth";
 import { ShoppingBagIcon } from "lucide-react";
 
 const Login: React.FC = () => {

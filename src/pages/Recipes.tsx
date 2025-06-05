@@ -1,5 +1,6 @@
+//Imports necessary dependencies, including React hooks, the useInventory context, and components like RecipeCard
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../contexts/useInventory'; // ✅ fixed import
+import { useInventory } from '../contexts/useInventory';
 import RecipeCard, { Recipe } from '../components/Recipes/RecipeCard';
 import { SearchIcon, RefreshCwIcon } from 'lucide-react';
 

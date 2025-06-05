@@ -1,5 +1,7 @@
+//Defines a React component that displays a list of food items from the inventory
+//Allows users to add, edit, delete, and filter items, while managing form visibility and filter states
 import React, { useState } from 'react';
-import { useInventory } from '../contexts/useInventory'; // ✅ fixed import
+import { useInventory } from '../contexts/useInventory';
 import { FoodItem } from '../contexts/InventoryContext';
 import FoodItemCard from '../components/Inventory/FoodItemCard';
 import AddItemForm from '../components/Inventory/AddItemForm';

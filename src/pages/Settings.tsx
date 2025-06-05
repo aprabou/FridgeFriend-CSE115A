@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+//Defines a React component that allows users to manage their account settings
+//Including updating their profile, handling authentication actions like signing out
+//Also managing household-related settings using Supabase and custom hooks
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/useAuth";
 import { useProfile } from "../contexts/useProfile";

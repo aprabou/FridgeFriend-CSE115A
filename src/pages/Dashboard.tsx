@@ -1,7 +1,10 @@
+//Defines a React component that displays a dashboard for managing food inventory
+//Shows summaries like expiration and storage distribution
+//All while handling loading states and rendering appropriate content based on inventory data
 import React from 'react';
 import ExpirationSummary from '../components/Dashboard/ExpirationSummary';
 import StorageDistribution from '../components/Dashboard/StorageDistribution';
-import { useInventory } from '../contexts/useInventory'; // ✅ correct import
+import { useInventory } from '../contexts/useInventory';
 import { Link } from 'react-router-dom';
 import { PlusIcon, CookingPotIcon } from 'lucide-react';
 
