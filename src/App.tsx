@@ -12,10 +12,12 @@ import Recipes from "./pages/Recipes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { useScrollToTop } from "./hooks/useScrollToTop";
 import "./globals.css";
 
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
+  useScrollToTop();
 
   return (
     <>
