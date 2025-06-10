@@ -1,11 +1,15 @@
 # 🌟 Fridge Friend
 
+We are live! Visit us [https://fridge-friend-cse-115-a.vercel.app/](here)
+
+Don't wanna sign up yet? Use our demo account to try out the features!
+
 A smart food waste reduction app that helps you track your food inventory, get expiration notifications, and discover recipes based on what you have.
 
 ## 🚀 Features
 
 - 📝 Track food items with expiration dates
-- ⏰ Get notifications for items about to expire
+- ⏰ Get email notifications for items about to expire
 - 👨‍👩‍👧‍👦 Share inventory with household members
 - 🥘 Get recipe suggestions based on available ingredients
 - 💡 Receive food storage tips
