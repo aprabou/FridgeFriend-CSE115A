@@ -15,7 +15,7 @@ A smart food waste reduction app that helps you track your food inventory, get e
 
 - **Frontend**: React, TypeScript, Tailwind CSS, Lucide Icons
 - **Backend**: Supabase (Authentication, Database, Real-time updates)
-- **Deployment**: Netlify
+- **Deployment**: Vercel
 
 ## 🏁 Getting Started
 
