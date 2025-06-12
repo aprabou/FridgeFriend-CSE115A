@@ -7,7 +7,7 @@ import React, {
   PropsWithChildren,
 } from "react";
 import { supabase } from "../lib/supabaseClient"; // Adjust the import path for your Supabase client
-import { useAuth } from "./useAuth"; // ✅ updated import
+import { useAuth } from "./useAuth"; // updated import
 import { sendNotificationEmail } from "../utils/sendNotificationEmail"; // Adjust the import path for your email service
 
 interface Notification {
