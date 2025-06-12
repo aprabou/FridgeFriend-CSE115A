@@ -1,4 +1,4 @@
-// src/utils/sendExpiringNotification.ts
+// File prepares the notification message and sends it via email
 import {
   emailjs,
   EMAILJS_SERVICE_ID,
