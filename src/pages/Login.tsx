@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// eslint-disable @typescript-eslint/no-explicit-any
 
-//Defines a React component that provides a login form
-//Allowing users to enter their email and password, handle form submission, and authenticate using the useAuth context
-//All while managing loading and error states
+// Defines a React component that provides a login form
+// Allowing users to enter their email and password, handle form submission, and authenticate using the useAuth context
+// All while managing loading and error states
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth";

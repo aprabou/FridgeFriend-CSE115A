@@ -1,8 +1,8 @@
 "use client"
-//Defines a React component that allows users to manage their account settings
-//Including updating their profile, handling authentication actions like signing out
-//Also managing household-related settings using Supabase and custom hooks
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// Defines a React component that allows users to manage their account settings
+// Including updating their profile, handling authentication actions like signing out
+// Also managing household-related settings using Supabase and custom hooks
+// eslint-disable @typescript-eslint/no-explicit-any 
 
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"

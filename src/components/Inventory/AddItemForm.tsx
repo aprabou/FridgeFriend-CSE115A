@@ -1,5 +1,5 @@
-//Defines and exports a React component that provides a form for adding or editing food items in an inventory
-//It manages form state with useState, pre-fills fields when editing an existing item, and handles submission and closure
+// Defines and exports a React component that provides a form for adding or editing food items in an inventory
+// It manages form state with useState, pre-fills fields when editing an existing item, and handles submission and closure
 "use client"
 
 import type React from "react"
@@ -19,9 +19,9 @@ import { cn } from "@/lib/utils"
 
 
 interface AddItemFormProps {
-  /** existing item when editing */
+  // existing item when editing
   item?: FoodItem | null
-  /** called with new/updated payload */
+  //called with new/updated payload
   onSubmit: (data: Omit<FoodItem, "id" | "user_id" | "household_id" | "created_at">) => Promise<void>
   onClose: () => void
 }

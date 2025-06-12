@@ -1,6 +1,6 @@
 // src/contexts/AuthProvider.tsx
-//Defines a React context provider that manages user authentication state using Supabase
-//Including handling sign-in, sign-up, and session updates
+// Defines a React context provider that manages user authentication state using Supabase
+// Including handling sign-in, sign-up, and session updates
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import type { User, Session } from "@supabase/supabase-js";

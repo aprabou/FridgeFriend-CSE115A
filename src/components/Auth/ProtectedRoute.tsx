@@ -1,5 +1,5 @@
-//Defines and exports a React component that acts as a route guard for authenticated access
-//Uses useAuth hook to check user's authentication state
+// Defines and exports a React component that acts as a route guard for authenticated access
+// Uses useAuth hook to check user's authentication state
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth';

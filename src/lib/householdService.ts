@@ -1,7 +1,7 @@
 // src/lib/householdService.ts
-//Defines functions for managing household-related operations
-//Such as creating a household, linking it to a user profile, and adding the creator as a household member
-//Done using Supabase for database interactions
+// Defines functions for managing household-related operations
+// Such as creating a household, linking it to a user profile, and adding the creator as a household member
+// Done using Supabase for database interactions
 import { supabase } from "./supabaseClient";
 
 export async function createHousehold(
