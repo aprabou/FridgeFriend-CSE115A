@@ -7,7 +7,7 @@ export async function createHousehold(
   name: string,
   userId: string
 ): Promise<{ id: string; name: string }> {
-  // 1️⃣ insert household
+  // insert household
   const { data: hh, error: hhErr } = await supabase
     .from("households")
     .insert({ name })
@@ -16,14 +16,14 @@ export async function createHousehold(
 
   if (hhErr || !hh) throw hhErr ?? new Error("Failed to create household");
 
-  // 2️⃣ link to profile
+  // link to profile
   const { error: linkErr } = await supabase
     .from("profiles")
     .update({ household_id: hh.id })
     .eq("id", userId);
   if (linkErr) throw linkErr;
 
-  // 3️⃣ add creator as owner
+  // add creator as owner
   const { error: memberErr } = await supabase
     .from("household_members")
     .insert({
