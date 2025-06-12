@@ -1,5 +1,3 @@
-// src/contexts/ProfileContext.tsx
-// eslint-disable @typescript-eslint/no-explicit-any
 // Defines a React context to manage user profile data, including fetching, updating, and storing profile information from Supabase
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./useAuth";

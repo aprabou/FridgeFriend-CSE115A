@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx
 // Sets up a React context and provider to manage user authentication
 // Sets up sign-in, sign-out, and sign-up functionality using Supabase
 import { createContext, useState, useEffect, ReactNode, FC } from "react";

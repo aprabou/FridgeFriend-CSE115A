@@ -1,5 +1,3 @@
-// eslint-disable @typescript-eslint/no-explicit-any
-
 // Defines a React component that provides a registration form
 // Allowing users to input their email, phone, password, and confirm password
 // All while handling form validation, error messages, and user sign-up using the useAuth context

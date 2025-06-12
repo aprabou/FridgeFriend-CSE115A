@@ -1,4 +1,3 @@
-// src/components/Layout/Navbar.tsx
 // Defines and exports a React component that renders a navigation bar for the application
 // Manages user interactions like toggling menus and handles user logout via the useAuth context
 // Provides navigation functionality using react-router-dom

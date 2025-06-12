@@ -1,4 +1,3 @@
-// src/components/ExpirationSummary.tsx
 // Defines and exports a React component that displays a summary of food items nearing expiration
 // It uses the useInventory context to access inventory data and has logic to send notification emails for expiring items
 import React, { useEffect, useState } from "react";

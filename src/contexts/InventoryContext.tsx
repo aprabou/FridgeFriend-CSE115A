@@ -1,5 +1,3 @@
-// eslint-disable @typescript-eslint/no-explicit-any
-// src/contexts/InventoryContext.tsx
 // Defines a React context to manage the inventory of food items
 // Including their state, loading status, and related operations, using Supabase and other custom hooks
 import React, { createContext, useState, useEffect } from "react";
